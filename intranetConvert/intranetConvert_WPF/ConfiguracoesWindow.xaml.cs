@@ -17,7 +17,8 @@ namespace intranetConvert_WPF
             ConfiguracoesAtualizadas = new Configuracoes
             {
                 PastaRemessa = configuracoesAtuais.PastaRemessa,
-                PastaCSV = configuracoesAtuais.PastaCSV
+                PastaCSV = configuracoesAtuais.PastaCSV,
+                TempoDeEspera = configuracoesAtuais.TempoDeEspera
             };
             DataContext = ConfiguracoesAtualizadas;
         }
@@ -58,7 +59,9 @@ namespace intranetConvert_WPF
             XDocument xdoc = new XDocument(
                 new XElement("Configuracoes",
                     new XElement("PastaRemessa", ConfiguracoesAtualizadas.PastaRemessa),
-                    new XElement("PastaCSV", ConfiguracoesAtualizadas.PastaCSV)
+                    new XElement("PastaCSV", ConfiguracoesAtualizadas.PastaCSV),
+                    new XElement("TempoDeEspera", ConfiguracoesAtualizadas.TempoDeEspera)
+
                 )
             );
 
@@ -70,13 +73,17 @@ namespace intranetConvert_WPF
             xdoc.Save(configFile);
         }
 
+        private void NumberValidationTextBox(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            e.Handled = !int.TryParse(e.Text, out _);
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
 
     }
 
@@ -86,17 +93,20 @@ namespace intranetConvert_WPF
         private static readonly string ConfigPath = Path.Combine(AppDataPath, "IntranetConvert");
         private static readonly string ConfigFile = Path.Combine(ConfigPath, "config.xml");
         public static Configuracoes CarregarConfiguracoes()
-        {  
+        {
             if (File.Exists(ConfigFile))
             {
                 try
                 {
                     XDocument doc = XDocument.Load(ConfigFile);
-                    return new Configuracoes
-                    {
-                        PastaRemessa = doc.Root.Element("PastaRemessa")?.Value ?? "",
-                        PastaCSV = doc.Root.Element("PastaCSV")?.Value ?? ""
-                    };
+                    if (doc != null)
+                        return new Configuracoes
+                        {
+                            PastaRemessa = doc.Root.Element("PastaRemessa")?.Value ?? "",
+                            PastaCSV = doc.Root.Element("PastaCSV")?.Value ?? "",
+                            TempoDeEspera = Convert.ToInt32(doc.Root.Element("TempoDeEspera")?.Value)
+
+                        };
                 }
                 catch (Exception)
                 {
@@ -112,7 +122,9 @@ namespace intranetConvert_WPF
             XDocument doc = new XDocument(
                 new XElement("Configuracoes",
                     new XElement("PastaRemessa", config.PastaRemessa),
-                    new XElement("PastaCSV", config.PastaCSV)
+                    new XElement("PastaCSV", config.PastaCSV),
+                    new XElement("TempoDeEspera", config.TempoDeEspera)
+
                 )
             );
             doc.Save(ConfigFile);

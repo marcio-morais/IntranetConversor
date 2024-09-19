@@ -1,20 +1,94 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
+﻿using Ookii.Dialogs.Wpf;
 using System.IO;
-using System.Linq;
 using System.Text;
+using System.Timers;
 using System.Windows;
-using System.Xml.Linq;
-using Microsoft.Win32;
-using System.Xml.Serialization;
-using Ookii.Dialogs.Wpf;
+using System.Windows.Forms;
 
 namespace intranetConvert_WPF
 {
     public partial class MainWindow : Window
     {
+        private NotifyIcon notifyIcon;
+        private System.Timers.Timer _timer;
+        private bool _isHidden = false;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            CarregarConfiguracoes();
+        }
+
+        private void ConfigurarTimer()
+        {
+            _timer = new System.Timers.Timer(_configuracoes.TempoDeEspera * 1000); // 1000 milissegundos  = 1s
+            _timer.Elapsed += Timer_Elapsed;
+            _timer.AutoReset = true;
+            _timer.Enabled = true;
+        }
+
+        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            if (_isHidden)
+            {
+                // Invoque o método btnConverter_Click na thread da UI
+                Dispatcher.Invoke(() =>
+                {
+                    btnConverter_Click(null, null);
+                });
+            }
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (_timer != null)
+            {
+                _timer.Stop();
+                _timer.Dispose();
+                base.OnClosing(e);
+            }
+        }
+
+        private void MinimizeToBandeja_Click(object sender, RoutedEventArgs e)
+        {
+            _isHidden = true;
+            this.Hide();
+            NotifyIcon.ShowBalloonTip($"Integrador de pedido", $"Modo automático ativado.\nAtualização a cada {_configuracoes.TempoDeEspera} segundos.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
+
+        }
+
+        private void OpenFromTray_Click(object sender, RoutedEventArgs e)
+        {
+            this.Show();
+            this.WindowState = WindowState.Normal;
+            _isHidden = false;
+
+        }
+
+        private void Exit_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Application.Current.Shutdown();
+        }
+
+        protected override void OnStateChanged(EventArgs e)
+        {
+            _isHidden = false;
+            if (WindowState == WindowState.Minimized)
+            {
+                this.Hide();
+                NotifyIcon.ShowBalloonTip("Integrador de pedido", $"Modo automático ativado.\nAtualização a cada {_configuracoes.TempoDeEspera} segundos.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
+                _isHidden = true;
+            }
+            base.OnStateChanged(e);
+        }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            e.Cancel = true;
+            this.Hide();
+            NotifyIcon.ShowBalloonTip("IntranetConvert", "Aplicativo minimizado para a bandeja.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
+        }
+
         private Configuracoes _configuracoes = new Configuracoes();
 
         private readonly string[] _csvHeader = new[]
@@ -30,20 +104,13 @@ namespace intranetConvert_WPF
             "Qtd Parcela", "Data Prevista", "Vendedor", "Forma Pagamento", "ID Forma Pagamento"
         };
 
-        public MainWindow()
-        {
-            InitializeComponent();
-            CarregarConfiguracoes();
-        }
-
         private void BtnBrowseInput_Click(object sender, RoutedEventArgs e)
         {
-
             var dialog = new VistaFolderBrowserDialog();
             if (dialog.ShowDialog(this) == true)
             {
-                TxtInputFile.Text= dialog.SelectedPath;
-            }           
+                TxtInputFile.Text = dialog.SelectedPath;
+            }
         }
 
         private void BtnBrowseOutput_Click(object sender, RoutedEventArgs e)
@@ -61,33 +128,57 @@ namespace intranetConvert_WPF
             {
                 if (TxtInputFile.Text.Equals("") || TxtOutputFile.Text.Equals(""))
                 {
-                    MessageBox.Show("Pasta de origem e de destino são obrigatórios.");
+                    if (!_isHidden)
+                        System.Windows.MessageBox.Show("Pasta de origem e de destino são obrigatórios.");
+
                     return;
-                }
+                }                
 
                 string[] arquivosRemessa = Directory.GetFiles(_configuracoes.PastaRemessa, "*.txt");
                 if (arquivosRemessa.Length == 0)
                 {
-                    MessageBox.Show("Nenhum arquivo de remessa encontrado na pasta especificada.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    if (!_isHidden)
+                        System.Windows.MessageBox.Show("Nenhum arquivo de remessa encontrado na pasta especificada.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+
                     return;
                 }
 
-                string outputFile = Path.Combine(_configuracoes.PastaCSV, $"pedidos_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
-                List<Dictionary<string, string>> todosPedidos = new List<Dictionary<string, string>>();
+                string nomeArquivoCsv = $"pedidos_FC_{DateTime.Now:yyyyMMdd_HHmmss}";
+                string outputFile = Path.Combine(_configuracoes.PastaCSV, $"{nomeArquivoCsv}.csv");
 
+                string pastaProcessados = Path.Combine(_configuracoes.PastaRemessa, "jaProcessados");
+                if (!Directory.Exists(pastaProcessados))
+                {
+                    Directory.CreateDirectory(pastaProcessados);
+                }
+               
+                var pastaDeArquivoDeRemessaProcessados = Path.Combine(_configuracoes.PastaRemessa + "\\jaProcessados\\", nomeArquivoCsv);
+                if (!Directory.Exists(pastaDeArquivoDeRemessaProcessados))
+                {
+                    Directory.CreateDirectory(pastaDeArquivoDeRemessaProcessados);
+                }
+
+                List<Dictionary<string, string>> todosPedidos = new List<Dictionary<string, string>>();
                 foreach (string arquivo in arquivosRemessa)
                 {
                     var parser = new RemessaParser(arquivo);
-                    todosPedidos.AddRange(parser.ParseRemessa());
+                    todosPedidos.AddRange(parser.ParseRemessa());                    
+
+                    // Move o arquivo processado para a pasta "jaProcessados"
+                    string nomeArquivo = Path.GetFileName(arquivo);
+                    string destino = Path.Combine(pastaDeArquivoDeRemessaProcessados, nomeArquivo);
+                    File.Move(arquivo, destino);
                 }
 
                 ExportToCsv(todosPedidos, outputFile);
 
-                MessageBox.Show($"Conversão concluída. Arquivo CSV gerado: {outputFile}", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
+                if (!_isHidden)
+                    System.Windows.MessageBox.Show($"Conversão concluída. Arquivo CSV gerado: {outputFile}", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erro durante a conversão: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (!_isHidden)
+                    System.Windows.MessageBox.Show($"Erro durante a conversão: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -109,6 +200,8 @@ namespace intranetConvert_WPF
             {
                 TxtInputFile.Text = _configuracoes.PastaRemessa;
                 TxtOutputFile.Text = _configuracoes.PastaCSV;
+
+                ConfigurarTimer();
             }
         }
 
@@ -163,6 +256,6 @@ namespace intranetConvert_WPF
             return string.Join(",", headers.Select(header =>
                 data.ContainsKey(header) ? $"\"{data[header].Replace("\"", "\"\"")}\"" : "\"\""));
         }
+            
     }
-
 }

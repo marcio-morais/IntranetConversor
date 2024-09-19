@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-public class Configuracoes : INotifyPropertyChanged
+public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
 {
     private string _pastaRemessa;
     public string PastaRemessa
@@ -27,6 +27,37 @@ public class Configuracoes : INotifyPropertyChanged
                 _pastaCSV = value;
                 OnPropertyChanged(nameof(PastaCSV));
             }
+        }
+    }
+
+    private int _tempoDeEspera;
+    public int TempoDeEspera
+    {
+        get => _tempoDeEspera;
+        set
+        {
+            if (_tempoDeEspera != value)
+            {
+                _tempoDeEspera = value;
+                OnPropertyChanged(nameof(TempoDeEspera));
+            }
+        }
+    }
+
+    public string Error => null;
+
+    public string this[string columnName]
+    {
+        get
+        {
+            if (columnName == nameof(TempoDeEspera))
+            {
+                if (TempoDeEspera < 0)
+                {
+                    return "O tempo de espera não pode ser negativo.";
+                }
+            }
+            return null;
         }
     }
 
