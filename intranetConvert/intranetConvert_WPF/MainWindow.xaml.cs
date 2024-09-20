@@ -93,14 +93,14 @@ namespace intranetConvert_WPF
 
         private readonly string[] _csvHeader = new[]
         {
-            "Numero pedido", "Nome Comprador", "Data", "CPF/CNPJ Comprador", "Endereco Comprador",
+            "Número pedido", "Nome Comprador", "Data", "CPF/CNPJ Comprador", "Endereço Comprador",
             "Bairro Comprador", "Numero Comprador", "Complemento Comprador", "CEP Comprador",
             "Cidade Comprador", "UF Comprador", "Telefone Comprador", "Celular Comprador",
             "E-mail Comprador", "Produto", "SKU", "Un", "Quantidade", "Valor Unitario",
             "Valor Total", "Total Pedido", "Valor Frete Pedido", "Valor Desconto Pedido",
             "Outras despesas", "Nome Entrega", "Endereco Entrega", "Numero Entrega",
             "Complemento Entrega", "Cidade Entrega", "UF Entrega", "CEP Entrega",
-            "Bairro Entrega", "Transportadora", "Servico", "Tipo Frete", "Observacoes",
+            "Bairro Entrega", "Transportadora", "Serviço", "Tipo Frete", "Observações",
             "Qtd Parcela", "Data Prevista", "Vendedor", "Forma Pagamento", "ID Forma Pagamento"
         };
 
@@ -122,7 +122,7 @@ namespace intranetConvert_WPF
             }
         }
 
-        private void btnConverter_Click(object sender, RoutedEventArgs e)
+        private async void btnConverter_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -132,7 +132,7 @@ namespace intranetConvert_WPF
                         System.Windows.MessageBox.Show("Pasta de origem e de destino são obrigatórios.");
 
                     return;
-                }                
+                }
 
                 string[] arquivosRemessa = Directory.GetFiles(_configuracoes.PastaRemessa, "*.txt");
                 if (arquivosRemessa.Length == 0)
@@ -151,7 +151,7 @@ namespace intranetConvert_WPF
                 {
                     Directory.CreateDirectory(pastaProcessados);
                 }
-               
+
                 var pastaDeArquivoDeRemessaProcessados = Path.Combine(_configuracoes.PastaRemessa + "\\jaProcessados\\", nomeArquivoCsv);
                 if (!Directory.Exists(pastaDeArquivoDeRemessaProcessados))
                 {
@@ -159,14 +159,15 @@ namespace intranetConvert_WPF
                 }
 
                 List<Dictionary<string, string>> todosPedidos = new List<Dictionary<string, string>>();
+
                 foreach (string arquivo in arquivosRemessa)
                 {
                     var parser = new RemessaParser(arquivo);
-                    todosPedidos.AddRange(parser.ParseRemessa());                    
+                    todosPedidos.AddRange(await parser.ParseRemessa());
 
-                    // Move o arquivo processado para a pasta "jaProcessados"
+                    // Mover o arquivo processado
                     string nomeArquivo = Path.GetFileName(arquivo);
-                    string destino = Path.Combine(pastaDeArquivoDeRemessaProcessados, nomeArquivo);
+                    string destino = Path.Combine(pastaProcessados, nomeArquivo);
                     File.Move(arquivo, destino);
                 }
 
@@ -181,6 +182,66 @@ namespace intranetConvert_WPF
                     System.Windows.MessageBox.Show($"Erro durante a conversão: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        //private void btnConverter_Click(object sender, RoutedEventArgs e)
+        //{
+        //    try
+        //    {
+        //        if (TxtInputFile.Text.Equals("") || TxtOutputFile.Text.Equals(""))
+        //        {
+        //            if (!_isHidden)
+        //                System.Windows.MessageBox.Show("Pasta de origem e de destino são obrigatórios.");
+
+        //            return;
+        //        }                
+
+        //        string[] arquivosRemessa = Directory.GetFiles(_configuracoes.PastaRemessa, "*.txt");
+        //        if (arquivosRemessa.Length == 0)
+        //        {
+        //            if (!_isHidden)
+        //                System.Windows.MessageBox.Show("Nenhum arquivo de remessa encontrado na pasta especificada.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+        //            return;
+        //        }
+
+        //        string nomeArquivoCsv = $"pedidos_FC_{DateTime.Now:yyyyMMdd_HHmmss}";
+        //        string outputFile = Path.Combine(_configuracoes.PastaCSV, $"{nomeArquivoCsv}.csv");
+
+        //        string pastaProcessados = Path.Combine(_configuracoes.PastaRemessa, "jaProcessados");
+        //        if (!Directory.Exists(pastaProcessados))
+        //        {
+        //            Directory.CreateDirectory(pastaProcessados);
+        //        }
+
+        //        var pastaDeArquivoDeRemessaProcessados = Path.Combine(_configuracoes.PastaRemessa + "\\jaProcessados\\", nomeArquivoCsv);
+        //        if (!Directory.Exists(pastaDeArquivoDeRemessaProcessados))
+        //        {
+        //            Directory.CreateDirectory(pastaDeArquivoDeRemessaProcessados);
+        //        }
+
+        //        List<Dictionary<string, string>> todosPedidos = new List<Dictionary<string, string>>();
+        //        foreach (string arquivo in arquivosRemessa)
+        //        {
+        //            var parser = new RemessaParser(arquivo);
+        //            todosPedidos.AddRange(parser.ParseRemessa());                    
+
+        //            // Move o arquivo processado para a pasta "jaProcessados"
+        //            string nomeArquivo = Path.GetFileName(arquivo);
+        //            string destino = Path.Combine(pastaDeArquivoDeRemessaProcessados, nomeArquivo);
+        //            File.Move(arquivo, destino);
+        //        }
+
+        //        ExportToCsv(todosPedidos, outputFile);
+
+        //        if (!_isHidden)
+        //            System.Windows.MessageBox.Show($"Conversão concluída. Arquivo CSV gerado: {outputFile}", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        if (!_isHidden)
+        //            System.Windows.MessageBox.Show($"Erro durante a conversão: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+        //    }
+        //}
 
         private void MenuItemConfiguracoes_Click(object sender, RoutedEventArgs e)
         {
@@ -256,6 +317,6 @@ namespace intranetConvert_WPF
             return string.Join(",", headers.Select(header =>
                 data.ContainsKey(header) ? $"\"{data[header].Replace("\"", "\"\"")}\"" : "\"\""));
         }
-            
+
     }
 }

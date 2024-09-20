@@ -13,14 +13,14 @@ namespace intranetConvert_WPF
         private readonly string _outputFile;
         private readonly string[] _csvHeader = new[]
         {
-            "Numero pedido", "Nome Comprador", "Data", "CPF/CNPJ Comprador", "Endereco Comprador",
+            "Número pedido", "Nome Comprador", "Data", "CPF/CNPJ Comprador", "Endereço Comprador",
             "Bairro Comprador", "Numero Comprador", "Complemento Comprador", "CEP Comprador",
             "Cidade Comprador", "UF Comprador", "Telefone Comprador", "Celular Comprador",
             "E-mail Comprador", "Produto", "SKU", "Un", "Quantidade", "Valor Unitario",
             "Valor Total", "Total Pedido", "Valor Frete Pedido", "Valor Desconto Pedido",
             "Outras despesas", "Nome Entrega", "Endereco Entrega", "Numero Entrega",
             "Complemento Entrega", "Cidade Entrega", "UF Entrega", "CEP Entrega",
-            "Bairro Entrega", "Transportadora", "Servico", "Tipo Frete", "Observacoes",
+            "Bairro Entrega", "Transportadora", "Serviço", "Tipo Frete", "Observações",
             "Qtd Parcela", "Data Prevista", "Vendedor", "Forma Pagamento", "ID Forma Pagamento"
         };
 
@@ -28,8 +28,8 @@ namespace intranetConvert_WPF
         {
             _inputFile = inputFile;
         }
-
-        public List<Dictionary<string, string>> ParseRemessa()
+        
+        public async Task<List<Dictionary<string, string>>> ParseRemessa()
         {
             var pedidos = new List<Dictionary<string, string>>();
             Dictionary<string, string> currentPedido = null;
@@ -50,7 +50,7 @@ namespace intranetConvert_WPF
                     switch (identifier)
                     {
                         case "22":
-                            currentPedido = ParsePedidoHeader(fields);
+                            currentPedido = await ParsePedidoHeader(fields);
                             observacoes = "";
                             break;
                         case "23":
@@ -71,8 +71,8 @@ namespace intranetConvert_WPF
 
             if (currentPedido != null)
             {
-                if (observacoes.Equals(""))
-                    currentPedido["Observacoes"] = observacoes.ToString().Trim();
+                if (!observacoes.Equals(""))
+                    currentPedido["Observações"] = observacoes.ToString().Trim();
 
                 pedidos.Add(currentPedido);
             }
@@ -80,17 +80,36 @@ namespace intranetConvert_WPF
             return pedidos;
         }
 
-        private Dictionary<string, string> ParsePedidoHeader(string[] fields)
+        private async Task<Dictionary<string, string>> ParsePedidoHeader(string[] fields)
         {
-            return new Dictionary<string, string>
+            var pedido = new Dictionary<string, string>
             {
+                ["ID Forma Pagamento"] = fields[4],
                 ["Data"] = fields[8],
-                ["Data Prevista"] = fields[9],
+                ["Data Prevista"] = fields[10],
                 ["CPF/CNPJ Comprador"] = fields[12],
-                ["Numero pedido"] = fields[13],
+                ["Número pedido"] = fields[13],
                 ["Tipo Frete"] = fields[16] == "Normal" ? "Normal" : "Especial",
-                ["Observacoes"] = fields[17]
+                ["Observações"] = fields[17]
             };
+
+            // Consulta CNPJ
+            var cnpjInfo = await CNPJConsulta.ConsultarCNPJ(fields[12]);
+            if (cnpjInfo != null)
+            {
+                pedido["Nome Comprador"] = cnpjInfo.Nome;
+                pedido["Endereço Comprador"] = cnpjInfo.Logradouro;
+                pedido["Numero Comprador"] = cnpjInfo.Numero;
+                pedido["Complemento Comprador"] = cnpjInfo.Complemento;
+                pedido["Bairro Comprador"] = cnpjInfo.Bairro;
+                pedido["CEP Comprador"] = cnpjInfo.Cep;
+                pedido["Cidade Comprador"] = cnpjInfo.Municipio;
+                pedido["UF Comprador"] = cnpjInfo.Uf;
+                pedido["Telefone Comprador"] = cnpjInfo.Telefone;
+                pedido["E-mail Comprador"] = cnpjInfo.Email;
+            }
+
+            return pedido;
         }
 
         private void ParsePedidoItem(string[] fields, Dictionary<string, string> pedido)
@@ -125,6 +144,6 @@ namespace intranetConvert_WPF
 
             return result.ToString("F2");
         }
-               
+
     }
 }
