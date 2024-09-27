@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Configuracoes>
+  <CaminhoRemessa>.\arquivos\remessa.txt</CaminhoRemessa>
+  <CaminhoCSV>.\arquivos\pedidos.csv</CaminhoCSV>
+  <TempoDeEspera>10</TempoDeEspera>
+</Configuracoes>
