@@ -34,10 +34,8 @@
 //    }
 //}
 
-using System;
 using System.IO;
 using System.Text;
-using System.Linq;
 
 public class EncodingDetector
 {
@@ -90,7 +88,6 @@ public class EncodingDetector
             }
             catch
             {
-
             }
 
             // Se nenhuma codificação for detectada, use UTF-8 como fallback

@@ -53,8 +53,8 @@ namespace intranetConvert_WPF
         {
             _isHidden = true;
             this.Hide();
-            NotifyIcon.ShowBalloonTip($"Integrador de pedido", $"Modo automático ativado.\nAtualização a cada {_configuracoes.TempoDeEspera} segundos.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
 
+            NotifyIcon.ShowBalloonTip($"Integrador de pedido", $"Modo automático ativado.\nAtualização a cada {_configuracoes.TempoDeEspera} segundos.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
         }
 
         private void OpenFromTray_Click(object sender, RoutedEventArgs e)
@@ -62,7 +62,6 @@ namespace intranetConvert_WPF
             this.Show();
             this.WindowState = WindowState.Normal;
             _isHidden = false;
-
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)
@@ -82,27 +81,8 @@ namespace intranetConvert_WPF
             base.OnStateChanged(e);
         }
 
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
-        {
-            e.Cancel = true;
-            this.Hide();
-            NotifyIcon.ShowBalloonTip("IntranetConvert", "Aplicativo minimizado para a bandeja.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
-        }
-
         private Configuracoes _configuracoes = new Configuracoes();
 
-        private readonly string[] _csvHeader = new[]
-        {
-            "Número pedido", "Nome Comprador", "Data", "CPF/CNPJ Comprador", "Endereço Comprador",
-            "Bairro Comprador", "Numero Comprador", "Complemento Comprador", "CEP Comprador",
-            "Cidade Comprador", "UF Comprador", "Telefone Comprador", "Celular Comprador",
-            "E-mail Comprador", "Produto", "SKU", "Un", "Quantidade", "Valor Unitario",
-            "Valor Total", "Total Pedido", "Valor Frete Pedido", "Valor Desconto Pedido",
-            "Outras despesas", "Nome Entrega", "Endereco Entrega", "Numero Entrega",
-            "Complemento Entrega", "Cidade Entrega", "UF Entrega", "CEP Entrega",
-            "Bairro Entrega", "Transportadora", "Serviço", "Tipo Frete", "Observações",
-            "Qtd Parcela", "Data Prevista", "Vendedor", "Forma Pagamento", "ID Forma Pagamento"
-        };
 
         private void BtnBrowseInput_Click(object sender, RoutedEventArgs e)
         {
@@ -182,66 +162,7 @@ namespace intranetConvert_WPF
                     System.Windows.MessageBox.Show($"Erro durante a conversão: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        //private void btnConverter_Click(object sender, RoutedEventArgs e)
-        //{
-        //    try
-        //    {
-        //        if (TxtInputFile.Text.Equals("") || TxtOutputFile.Text.Equals(""))
-        //        {
-        //            if (!_isHidden)
-        //                System.Windows.MessageBox.Show("Pasta de origem e de destino são obrigatórios.");
-
-        //            return;
-        //        }                
-
-        //        string[] arquivosRemessa = Directory.GetFiles(_configuracoes.PastaRemessa, "*.txt");
-        //        if (arquivosRemessa.Length == 0)
-        //        {
-        //            if (!_isHidden)
-        //                System.Windows.MessageBox.Show("Nenhum arquivo de remessa encontrado na pasta especificada.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
-
-        //            return;
-        //        }
-
-        //        string nomeArquivoCsv = $"pedidos_FC_{DateTime.Now:yyyyMMdd_HHmmss}";
-        //        string outputFile = Path.Combine(_configuracoes.PastaCSV, $"{nomeArquivoCsv}.csv");
-
-        //        string pastaProcessados = Path.Combine(_configuracoes.PastaRemessa, "jaProcessados");
-        //        if (!Directory.Exists(pastaProcessados))
-        //        {
-        //            Directory.CreateDirectory(pastaProcessados);
-        //        }
-
-        //        var pastaDeArquivoDeRemessaProcessados = Path.Combine(_configuracoes.PastaRemessa + "\\jaProcessados\\", nomeArquivoCsv);
-        //        if (!Directory.Exists(pastaDeArquivoDeRemessaProcessados))
-        //        {
-        //            Directory.CreateDirectory(pastaDeArquivoDeRemessaProcessados);
-        //        }
-
-        //        List<Dictionary<string, string>> todosPedidos = new List<Dictionary<string, string>>();
-        //        foreach (string arquivo in arquivosRemessa)
-        //        {
-        //            var parser = new RemessaParser(arquivo);
-        //            todosPedidos.AddRange(parser.ParseRemessa());                    
-
-        //            // Move o arquivo processado para a pasta "jaProcessados"
-        //            string nomeArquivo = Path.GetFileName(arquivo);
-        //            string destino = Path.Combine(pastaDeArquivoDeRemessaProcessados, nomeArquivo);
-        //            File.Move(arquivo, destino);
-        //        }
-
-        //        ExportToCsv(todosPedidos, outputFile);
-
-        //        if (!_isHidden)
-        //            System.Windows.MessageBox.Show($"Conversão concluída. Arquivo CSV gerado: {outputFile}", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        if (!_isHidden)
-        //            System.Windows.MessageBox.Show($"Erro durante a conversão: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
-        //    }
-        //}
+               
 
         private void MenuItemConfiguracoes_Click(object sender, RoutedEventArgs e)
         {
@@ -270,7 +191,7 @@ namespace intranetConvert_WPF
         {
             using (var writer = new StreamWriter(outputFile, false, Encoding.UTF8))
             {
-                writer.WriteLine(string.Join(",", _csvHeader));
+                writer.WriteLine(string.Join(",", RemessaParser._csvHeader));
 
                 foreach (var pedido in pedidos)
                 {
@@ -306,7 +227,7 @@ namespace intranetConvert_WPF
 
         private string FormatCsvLine(Dictionary<string, string> data)
         {
-            var returno = string.Join(",", _csvHeader.Select(header =>
+            var returno = string.Join(",", RemessaParser._csvHeader.Select(header =>
                 data.TryGetValue(header, out var value) ? $"\"{value.Replace("\"", "\"\"")}\"" : "\"\""));
 
             return returno;
@@ -317,6 +238,5 @@ namespace intranetConvert_WPF
             return string.Join(",", headers.Select(header =>
                 data.ContainsKey(header) ? $"\"{data[header].Replace("\"", "\"\"")}\"" : "\"\""));
         }
-
     }
 }
