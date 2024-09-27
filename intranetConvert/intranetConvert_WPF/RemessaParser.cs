@@ -1,24 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace intranetConvert_WPF
 {
-    partial class RemessaParser
+    internal partial class RemessaParser
     {
         private readonly string _inputFile;
         private readonly string _outputFile;
-        private readonly string[] _csvHeader = new[]
+
+        public static readonly string[] _csvHeader = new[]
         {
             "Número pedido", "Nome Comprador", "Data", "CPF/CNPJ Comprador", "Endereço Comprador",
-            "Bairro Comprador", "Numero Comprador", "Complemento Comprador", "CEP Comprador",
+            "Bairro Comprador", "Número Comprador", "Complemento Comprador", "CEP Comprador",
             "Cidade Comprador", "UF Comprador", "Telefone Comprador", "Celular Comprador",
-            "E-mail Comprador", "Produto", "SKU", "Un", "Quantidade", "Valor Unitario",
+            "E-mail Comprador", "Produto", "SKU", "Un", "Quantidade", "Valor Unitário",
             "Valor Total", "Total Pedido", "Valor Frete Pedido", "Valor Desconto Pedido",
-            "Outras despesas", "Nome Entrega", "Endereco Entrega", "Numero Entrega",
+            "Outras despesas", "Nome Entrega", "Endereço Entrega", "Número Entrega",
             "Complemento Entrega", "Cidade Entrega", "UF Entrega", "CEP Entrega",
             "Bairro Entrega", "Transportadora", "Serviço", "Tipo Frete", "Observações",
             "Qtd Parcela", "Data Prevista", "Vendedor", "Forma Pagamento", "ID Forma Pagamento"
@@ -28,7 +25,7 @@ namespace intranetConvert_WPF
         {
             _inputFile = inputFile;
         }
-        
+
         public async Task<List<Dictionary<string, string>>> ParseRemessa()
         {
             var pedidos = new List<Dictionary<string, string>>();
@@ -53,6 +50,7 @@ namespace intranetConvert_WPF
                             currentPedido = await ParsePedidoHeader(fields);
                             observacoes = "";
                             break;
+
                         case "23":
                             {
                                 if (currentPedido != null)
@@ -61,6 +59,7 @@ namespace intranetConvert_WPF
                                 cont++;
                             }
                             break;
+
                         case "24":
                             if (currentPedido != null)
                                 ParsePedidoItem(fields, currentPedido);
@@ -99,7 +98,7 @@ namespace intranetConvert_WPF
             {
                 pedido["Nome Comprador"] = cnpjInfo.Nome;
                 pedido["Endereço Comprador"] = cnpjInfo.Logradouro;
-                pedido["Numero Comprador"] = cnpjInfo.Numero;
+                pedido["Número Comprador"] = cnpjInfo.Numero;
                 pedido["Complemento Comprador"] = cnpjInfo.Complemento;
                 pedido["Bairro Comprador"] = cnpjInfo.Bairro;
                 pedido["CEP Comprador"] = cnpjInfo.Cep;
@@ -123,7 +122,7 @@ namespace intranetConvert_WPF
             {
                 ["SKU"] = fields[2],
                 ["Quantidade"] = fields[3],
-                ["Valor Unitario"] = FormatPrice(fields[5]),
+                ["Valor Unitário"] = FormatPrice(fields[5]),
                 ["Valor Total"] = CalculateTotal(fields[3], fields[5])
             };
 
@@ -144,6 +143,5 @@ namespace intranetConvert_WPF
 
             return result.ToString("F2");
         }
-
     }
 }

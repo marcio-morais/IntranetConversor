@@ -3,6 +3,7 @@
 public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
 {
     private string _pastaRemessa;
+
     public string PastaRemessa
     {
         get => _pastaRemessa;
@@ -17,6 +18,7 @@ public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
     }
 
     private string _pastaCSV;
+
     public string PastaCSV
     {
         get => _pastaCSV;
@@ -31,6 +33,7 @@ public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
     }
 
     private int _tempoDeEspera;
+
     public int TempoDeEspera
     {
         get => _tempoDeEspera;

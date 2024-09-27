@@ -1,6 +1,4 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.Windows;
 
 namespace intranetConvert_WPF
 {
@@ -10,5 +8,4 @@ namespace intranetConvert_WPF
     public partial class App : Application
     {
     }
-
 }

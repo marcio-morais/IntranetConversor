@@ -1,9 +1,8 @@
-﻿using System;
+﻿using Ookii.Dialogs.Wpf;
+using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Xml.Linq;
-using System.IO;
-using Ookii.Dialogs.Wpf;
-using System.ComponentModel;
 
 namespace intranetConvert_WPF
 {
@@ -84,7 +83,6 @@ namespace intranetConvert_WPF
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
     }
 
     public static class ConfiguracaoManager
@@ -92,6 +90,7 @@ namespace intranetConvert_WPF
         private static readonly string AppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         private static readonly string ConfigPath = Path.Combine(AppDataPath, "IntranetConvert");
         private static readonly string ConfigFile = Path.Combine(ConfigPath, "config.xml");
+
         public static Configuracoes CarregarConfiguracoes()
         {
             if (File.Exists(ConfigFile))
@@ -105,7 +104,6 @@ namespace intranetConvert_WPF
                             PastaRemessa = doc.Root.Element("PastaRemessa")?.Value ?? "",
                             PastaCSV = doc.Root.Element("PastaCSV")?.Value ?? "",
                             TempoDeEspera = Convert.ToInt32(doc.Root.Element("TempoDeEspera")?.Value)
-
                         };
                 }
                 catch (Exception)
@@ -130,5 +128,4 @@ namespace intranetConvert_WPF
             doc.Save(ConfigFile);
         }
     }
-
 }
