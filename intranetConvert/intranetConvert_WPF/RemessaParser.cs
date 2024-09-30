@@ -7,6 +7,7 @@ namespace intranetConvert_WPF
     {
         private readonly string _inputFile;
         private readonly string _outputFile;
+        public int sequencia = 0;
 
         public static readonly string[] _csvHeader = new[]
         {
@@ -47,10 +48,12 @@ namespace intranetConvert_WPF
                     switch (identifier)
                     {
                         case "22":
-                            currentPedido = await ParsePedidoHeader(fields);
-                            observacoes = "";
+                            {
+                                sequencia++;
+                                currentPedido = await ParsePedidoHeader(fields);
+                                observacoes = "";
+                            }
                             break;
-
                         case "23":
                             {
                                 if (currentPedido != null)
@@ -64,16 +67,18 @@ namespace intranetConvert_WPF
                             if (currentPedido != null)
                                 ParsePedidoItem(fields, currentPedido);
                             break;
+
+                        case "25":
+                            if (currentPedido != null)
+                            {
+                                if (!observacoes.Equals(""))
+                                    currentPedido["Observações"] = observacoes.ToString().Trim();
+
+                                pedidos.Add(currentPedido);
+                            }
+                            break;
                     }
                 }
-            }
-
-            if (currentPedido != null)
-            {
-                if (!observacoes.Equals(""))
-                    currentPedido["Observações"] = observacoes.ToString().Trim();
-
-                pedidos.Add(currentPedido);
             }
 
             return pedidos;
@@ -83,11 +88,12 @@ namespace intranetConvert_WPF
         {
             var pedido = new Dictionary<string, string>
             {
-                ["ID Forma Pagamento"] = fields[4],
+                //["ID Forma Pagamento"] = fields[4],
+                ["Forma Pagamento"] = fields[4],
                 ["Data"] = fields[8],
                 ["Data Prevista"] = fields[10],
                 ["CPF/CNPJ Comprador"] = fields[12],
-                ["Número pedido"] = fields[13],
+                ["Número pedido"] = $"{fields[13]}_{sequencia}",
                 ["Tipo Frete"] = fields[16] == "Normal" ? "Normal" : "Especial",
                 ["Observações"] = fields[17]
             };

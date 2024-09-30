@@ -27,7 +27,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Text="Selecione o arquivo de remessa:" Margin="0,0,0,5" />
+            <TextBlock Grid.Row="0" Text="Selecione local do arquivo de remessa:" Margin="0,0,0,5" />
             <DockPanel Grid.Row="1" Margin="0,5">
                 <Button Content="Procurar" DockPanel.Dock="Right" Width="80" Click="BtnBrowseInput_Click" Margin="5,0,0,0" />
                 <TextBox x:Name="TxtInputFile" IsReadOnly="True" />

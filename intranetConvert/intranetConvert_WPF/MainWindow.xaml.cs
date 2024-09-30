@@ -83,7 +83,6 @@ namespace intranetConvert_WPF
 
         private Configuracoes _configuracoes = new Configuracoes();
 
-
         private void BtnBrowseInput_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new VistaFolderBrowserDialog();
@@ -147,7 +146,7 @@ namespace intranetConvert_WPF
 
                     // Mover o arquivo processado
                     string nomeArquivo = Path.GetFileName(arquivo);
-                    string destino = Path.Combine(pastaProcessados, nomeArquivo);
+                    string destino = Path.Combine(pastaDeArquivoDeRemessaProcessados, nomeArquivo);
                     File.Move(arquivo, destino);
                 }
 
@@ -162,8 +161,7 @@ namespace intranetConvert_WPF
                     System.Windows.MessageBox.Show($"Erro durante a conversão: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-               
-
+        
         private void MenuItemConfiguracoes_Click(object sender, RoutedEventArgs e)
         {
             var configWindow = new ConfiguracoesWindow(_configuracoes);
