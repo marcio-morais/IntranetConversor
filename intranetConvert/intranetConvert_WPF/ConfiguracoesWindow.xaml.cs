@@ -17,7 +17,9 @@ namespace intranetConvert_WPF
             {
                 PastaRemessa = configuracoesAtuais.PastaRemessa,
                 PastaCSV = configuracoesAtuais.PastaCSV,
-                TempoDeEspera = configuracoesAtuais.TempoDeEspera
+                TempoDeEspera = configuracoesAtuais.TempoDeEspera,
+                ConsultarCNPJ = configuracoesAtuais.ConsultarCNPJ,
+                ApiCNPJ =  configuracoesAtuais.ApiCNPJ
             };
             DataContext = ConfiguracoesAtualizadas;
         }
@@ -59,7 +61,9 @@ namespace intranetConvert_WPF
                 new XElement("Configuracoes",
                     new XElement("PastaRemessa", ConfiguracoesAtualizadas.PastaRemessa),
                     new XElement("PastaCSV", ConfiguracoesAtualizadas.PastaCSV),
-                    new XElement("TempoDeEspera", ConfiguracoesAtualizadas.TempoDeEspera)
+                    new XElement("TempoDeEspera", ConfiguracoesAtualizadas.TempoDeEspera),
+                    new XElement("ConsultarCNPJ", ConfiguracoesAtualizadas.ConsultarCNPJ),
+                    new XElement("ApiCNPJ", ConfiguracoesAtualizadas.ApiCNPJ)
 
                 )
             );
@@ -103,7 +107,9 @@ namespace intranetConvert_WPF
                         {
                             PastaRemessa = doc.Root.Element("PastaRemessa")?.Value ?? "",
                             PastaCSV = doc.Root.Element("PastaCSV")?.Value ?? "",
-                            TempoDeEspera = Convert.ToInt32(doc.Root.Element("TempoDeEspera")?.Value)
+                            TempoDeEspera = Convert.ToInt32(doc.Root.Element("TempoDeEspera")?.Value),
+                            ConsultarCNPJ = Convert.ToBoolean(doc.Root.Element("ConsultarCNPJ")?.Value),
+                            ApiCNPJ = doc.Root.Element("ApiCNPJ")?.Value ?? ""
                         };
                 }
                 catch (Exception)
@@ -121,8 +127,9 @@ namespace intranetConvert_WPF
                 new XElement("Configuracoes",
                     new XElement("PastaRemessa", config.PastaRemessa),
                     new XElement("PastaCSV", config.PastaCSV),
-                    new XElement("TempoDeEspera", config.TempoDeEspera)
-
+                    new XElement("TempoDeEspera", config.TempoDeEspera),
+                    new XElement("ConsultarCNPJ", config.ConsultarCNPJ),
+                    new XElement("ApiCNPJ", config.ApiCNPJ)
                 )
             );
             doc.Save(ConfigFile);

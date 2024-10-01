@@ -1,4 +1,6 @@
-﻿using Ookii.Dialogs.Wpf;
+﻿using intranetConvert_WPF.Integracao.bling.Models;
+using intranetConvert_WPF.Integracao.bling.Services;
+using Ookii.Dialogs.Wpf;
 using System.IO;
 using System.Text;
 using System.Timers;
@@ -53,13 +55,15 @@ namespace intranetConvert_WPF
         {
             _isHidden = true;
             this.Hide();
-
+            ConfigurarTimer();
             NotifyIcon.ShowBalloonTip($"Integrador de pedido", $"Modo automático ativado.\nAtualização a cada {_configuracoes.TempoDeEspera} segundos.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
         }
 
         private void OpenFromTray_Click(object sender, RoutedEventArgs e)
         {
             this.Show();
+            _timer.Stop();
+            _timer.Dispose();
             this.WindowState = WindowState.Normal;
             _isHidden = false;
         }
@@ -77,6 +81,7 @@ namespace intranetConvert_WPF
                 this.Hide();
                 NotifyIcon.ShowBalloonTip("Integrador de pedido", $"Modo automático ativado.\nAtualização a cada {_configuracoes.TempoDeEspera} segundos.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
                 _isHidden = true;
+
             }
             base.OnStateChanged(e);
         }
@@ -136,13 +141,21 @@ namespace intranetConvert_WPF
                 {
                     Directory.CreateDirectory(pastaDeArquivoDeRemessaProcessados);
                 }
-
-                List<Dictionary<string, string>> todosPedidos = new List<Dictionary<string, string>>();
+                var todosPedidosApi = new List<Pedido>();
+                var todosPedidosCsv = new List<Dictionary<string, string>>();
 
                 foreach (string arquivo in arquivosRemessa)
                 {
-                    var parser = new RemessaParser(arquivo);
-                    todosPedidos.AddRange(await parser.ParseRemessa());
+                    if (_configuracoes.ForApi == true)
+                    {
+                        var parser = new RemessaParssePedido(arquivo);
+                        todosPedidosApi.AddRange(parser.parssePedido());
+                    }
+                    else
+                    {
+                        var parser = new RemessaParser(arquivo);
+                        todosPedidosCsv.AddRange(await parser.ParseRemessa());
+                    }
 
                     // Mover o arquivo processado
                     string nomeArquivo = Path.GetFileName(arquivo);
@@ -150,7 +163,11 @@ namespace intranetConvert_WPF
                     File.Move(arquivo, destino);
                 }
 
-                ExportToCsv(todosPedidos, outputFile);
+                if (_configuracoes.ForApi == true)
+                    ExportToApi(todosPedidosApi);
+                else
+                    ExportToCsv(todosPedidosCsv, outputFile);
+
 
                 if (!_isHidden)
                     System.Windows.MessageBox.Show($"Conversão concluída. Arquivo CSV gerado: {outputFile}", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -161,7 +178,12 @@ namespace intranetConvert_WPF
                     System.Windows.MessageBox.Show($"Erro durante a conversão: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        
+
+        private void ExportToApi(List<Pedido> todosPedidosApi)
+        {
+            throw new NotImplementedException();
+        }
+
         private void MenuItemConfiguracoes_Click(object sender, RoutedEventArgs e)
         {
             var configWindow = new ConfiguracoesWindow(_configuracoes);
@@ -176,12 +198,11 @@ namespace intranetConvert_WPF
         private void CarregarConfiguracoes()
         {
             _configuracoes = ConfiguracaoManager.CarregarConfiguracoes();
+
             if (_configuracoes != null)
             {
                 TxtInputFile.Text = _configuracoes.PastaRemessa;
                 TxtOutputFile.Text = _configuracoes.PastaCSV;
-
-                ConfigurarTimer();
             }
         }
 
@@ -235,6 +256,15 @@ namespace intranetConvert_WPF
         {
             return string.Join(",", headers.Select(header =>
                 data.ContainsKey(header) ? $"\"{data[header].Replace("\"", "\"\"")}\"" : "\"\""));
+        }
+
+        private void MenuItem_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            this.Show();
+            _timer.Stop();
+            _timer.Dispose();
+            this.WindowState = WindowState.Normal;
+            _isHidden = false;
         }
     }
 }

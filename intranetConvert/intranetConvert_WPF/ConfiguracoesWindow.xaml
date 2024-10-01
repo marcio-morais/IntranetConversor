@@ -2,9 +2,26 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Configurações" Height="200" Width="600"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"        
+        >
+    <Window.Icon>
+        <DrawingImage>
+            <DrawingImage.Drawing>
+                <GeometryDrawing Brush="Gray">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <Geometry>
+                                M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z
+                            </Geometry>
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+    </Window.Icon>
     <Grid Margin="10">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -18,18 +35,23 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <TextBlock Text="Arquivo de Remessa:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" />
-        <TextBox Text="{Binding PastaRemessa, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" Grid.Column="1" Margin="5" />
-        <Button Content="..." Grid.Row="0" Grid.Column="2" Margin="5" Padding="5,0" Click="btnSelecionarPastaRemessa_Click" />
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Arquivo de Remessa:"  VerticalAlignment="Center" />
+        <TextBox Grid.Row="0" Grid.Column="1" Margin="5" Text="{Binding PastaRemessa, UpdateSourceTrigger=PropertyChanged}" />
+        <Button Grid.Row="0" Grid.Column="2" Margin="5" Padding="5,0"  Content="..." Click="btnSelecionarPastaRemessa_Click" />
 
-        <TextBlock Text="Arquivo CSV:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" />
-        <TextBox Text="{Binding PastaCSV, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="1" Margin="5" />
-        <Button Content="..." Grid.Row="1" Grid.Column="2" Margin="5" Padding="5,0" Click="btnSelecionarPastaCSV_Click" />
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="Arquivo CSV:"  VerticalAlignment="Center" />
+        <TextBox  Grid.Row="1" Grid.Column="1" Margin="5" Text="{Binding PastaCSV, UpdateSourceTrigger=PropertyChanged}" />
+        <Button Grid.Row="1" Grid.Column="2" Margin="5" Padding="5,0"  Content="..." Click="btnSelecionarPastaCSV_Click" />
 
-        <TextBlock Text="Tempo de Espera (segundos):" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" />
-        <TextBox Text="{Binding TempoDeEspera, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Grid.Row="2" Grid.Column="1" Margin="5" PreviewTextInput="NumberValidationTextBox" />
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="Tempo de Espera (segundos):"  VerticalAlignment="Center" />
+        <TextBox Grid.Row="2" Text="{Binding TempoDeEspera, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"  Grid.Column="1" Margin="5" PreviewTextInput="NumberValidationTextBox" />
 
-        <StackPanel Grid.Row="5" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right">
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="Consultar Cnpj (Api):" VerticalAlignment="Center" />
+        <CheckBox x:Name="chkConsultarCNPJ" Grid.Row="3" Grid.Column="2" Margin="5" VerticalAlignment="Center" IsChecked="{Binding ConsultarCNPJ, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+        <TextBox Grid.Row="3" Grid.Column="1" Margin="5" VerticalAlignment="Center" IsEnabled="{Binding IsChecked, ElementName=chkConsultarCNPJ}" Text="{Binding ApiCNPJ, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" PreviewTextInput="NumberValidationTextBox">
+            
+        </TextBox>
+        <StackPanel Grid.Row="6" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Salvar" Width="75" Margin="0,0,10,0" Click="btnSalvar_Click" />
             <Button Content="Cancelar" Width="75" Click="btnCancelar_Click" />
         </StackPanel>

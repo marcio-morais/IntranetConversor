@@ -25,33 +25,45 @@ namespace intranetConvert_WPF
         {
             try
             {
-                string url = $"https://www.receitaws.com.br/v1/cnpj/{cnpj}";
-                HttpResponseMessage response = await client.GetAsync(url);
+                var _configuracoes = ConfiguracaoManager.CarregarConfiguracoes();
 
-                if (response.IsSuccessStatusCode)
+                if (_configuracoes.ConsultarCNPJ == true)
                 {
-                    string jsonString = await response.Content.ReadAsStringAsync();
-                    dynamic jsonObject = JsonConvert.DeserializeObject(jsonString);
+                    //string url = $"https://www.receitaws.com.br/v1/cnpj/{cnpj}";
+                    string url = $"http://ws.hubdodesenvolvedor.com.br/v2/cnpj/?cnpj=${cnpj}&token=161080935xNpKnUZqtX290826744";
+                    HttpResponseMessage response = await client.GetAsync(url);
 
-                    return new CNPJInfo
+                    if (response.IsSuccessStatusCode)
                     {
-                        Nome = jsonObject.nome,
-                        Logradouro = jsonObject.logradouro,
-                        Numero = jsonObject.numero,
-                        Complemento = jsonObject.complemento,
-                        Bairro = jsonObject.bairro,
-                        Municipio = jsonObject.municipio,
-                        Uf = jsonObject.uf,
-                        Cep = jsonObject.cep,
-                        Telefone = jsonObject.telefone,
-                        Email = jsonObject.email
-                    };
+                        string jsonString = await response.Content.ReadAsStringAsync();
+                        dynamic jsonObject = JsonConvert.DeserializeObject(jsonString);
+
+                        if (jsonObject != null)
+                        {
+                            var CNPJInfo = new CNPJInfo();
+
+                            CNPJInfo.Nome = jsonObject.result.nome;
+                            CNPJInfo.Logradouro = jsonObject.result.logradouro;
+                            CNPJInfo.Numero = jsonObject.result.numero;
+                            CNPJInfo.Complemento = jsonObject.result.complemento;
+                            CNPJInfo.Bairro = jsonObject.result.bairro;
+                            CNPJInfo.Municipio = jsonObject.result.municipio;
+                            CNPJInfo.Uf = jsonObject.result.uf;
+                            CNPJInfo.Cep = jsonObject.result.cep;
+                            CNPJInfo.Telefone = jsonObject.result.telefone;
+                            CNPJInfo.Email = jsonObject.result.email;
+
+                            return CNPJInfo;
+                        }
+
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Erro na consulta do CNPJ: {response.StatusCode}");
+                        return null;
+                    }
                 }
-                else
-                {
-                    Console.WriteLine($"Erro na consulta do CNPJ: {response.StatusCode}");
-                    return null;
-                }
+                return null;
             }
             catch (Exception ex)
             {

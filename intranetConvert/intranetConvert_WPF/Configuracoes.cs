@@ -3,7 +3,6 @@
 public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
 {
     private string _pastaRemessa;
-
     public string PastaRemessa
     {
         get => _pastaRemessa;
@@ -48,6 +47,48 @@ public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
     }
 
     public string Error => null;
+
+    private bool _forApi;
+
+    public bool ForApi
+    {
+        get => _forApi;
+        set
+        {
+            if (_forApi != value)
+            {
+                _forApi = value;
+                OnPropertyChanged(nameof(ForApi));
+            }
+        }
+    }
+
+    private bool _consultarCNPJ;
+    public bool ConsultarCNPJ {
+        get => _consultarCNPJ;
+        set
+        {
+            if (_consultarCNPJ != value)
+            {
+                _consultarCNPJ = value;
+                OnPropertyChanged(nameof(_consultarCNPJ));
+            }
+        }
+    }
+
+    private string _apiCNPJ;
+    public string ApiCNPJ
+    {
+        get => _apiCNPJ;
+        set
+        {
+            if (_apiCNPJ != value)
+            {
+                _apiCNPJ = value;
+                OnPropertyChanged(nameof(_apiCNPJ));
+            }
+        }
+    }
 
     public string this[string columnName]
     {
