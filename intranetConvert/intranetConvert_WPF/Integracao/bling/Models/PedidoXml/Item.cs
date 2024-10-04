@@ -1,6 +1,6 @@
 ﻿// Models/OrderItem.cs
 
-namespace intranetConvert_WPF.Integracao.bling.Models
+namespace intranetConvert_WPF.Integracao.bling.Models.PedidoXml
 {
     public class Item
     {

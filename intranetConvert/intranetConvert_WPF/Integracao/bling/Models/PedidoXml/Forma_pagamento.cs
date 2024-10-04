@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace intranetConvert_WPF.Integracao.bling.Models
+namespace intranetConvert_WPF.Integracao.bling.Models.PedidoXml
 {
     public class Forma_pagamento
     {

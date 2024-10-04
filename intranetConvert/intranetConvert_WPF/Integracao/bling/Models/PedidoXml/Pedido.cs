@@ -1,7 +1,7 @@
 ﻿// Models/Order.cs
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace intranetConvert_WPF.Integracao.bling.Models
+namespace intranetConvert_WPF.Integracao.bling.Models.PedidoXml
 {
 
     public class Pedido

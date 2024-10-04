@@ -21,18 +21,18 @@ namespace intranetConvert_WPF.Integracao.bling.Services
             _inputFile = inputFile;
         }
 
-        public List<Pedido> parssePedido()
+        public List<Models.PedidoXml.Pedido> parssePedidoXml()
         {
             string observacoes = "";
             int cont = 0;
 
             string fileContent;
             EncodingDetector.DetectTextEncoding(_inputFile, out fileContent);
-            List<Pedido> pedidos = new List<Pedido>();
+            List<Models.PedidoXml.Pedido> pedidos = new List<Models.PedidoXml.Pedido>();
 
             using (var reader = new StringReader(fileContent))
             {
-                var pedido = new Pedido();
+                var pedido = new Models.PedidoXml.Pedido();
 
                 string? line;
                 while ((line = reader.ReadLine()) != null)
@@ -44,26 +44,25 @@ namespace intranetConvert_WPF.Integracao.bling.Services
                     {
                         case "22":
                             // Parse order header
-                            pedido = new Pedido
+                            pedido = new Models.PedidoXml.Pedido
                             {
-                                cliente = new Cliente(),
-                                itens = new List<Item>(),
-                                parcelas = new List<Parcela>()
+                                cliente = new Models.PedidoXml.Cliente(),
+                                itens = new List<Models.PedidoXml.Item>(),
+                                parcelas = new List<Models.PedidoXml.Parcela>()
                             };
-
-                            pedido.cliente = new Cliente(fields[12]);
-                            var parcela = new Parcela
+                            pedido.cliente = new Models.PedidoXml.Cliente(fields[12]);                            
+                            var parcela = new Models.PedidoXml.Parcela
                             {
                                 //data = DateTime.Parse(fields[1]),
                                 //vlr = decimal.Parse(fields[2]),
                                 //obs = fields[3]
-                                forma_pagamento = new Forma_pagamento { id = Convert.ToInt32(fields[4]) }
+                                forma_pagamento = new Models.PedidoXml.Forma_pagamento { id = Convert.ToInt32(fields[4]) }
                             };
                             pedido.parcelas.Add(parcela);
                             break;
                         case "24":
                             // Parse order item
-                            var item = new Item
+                            var item = new Models.PedidoXml.Item
                             {
                                 codigo = fields[2],
                                 //descricao = fields[2],
@@ -93,6 +92,82 @@ namespace intranetConvert_WPF.Integracao.bling.Services
             }
             return pedidos;
         }
+
+        public List<Models.PedidoJson.Pedido> parssePedidoJson()
+        {
+            string observacoes = "";
+            int cont = 0;
+
+            string fileContent;
+            EncodingDetector.DetectTextEncoding(_inputFile, out fileContent);
+            List<Models.PedidoJson.Pedido> pedidos = new List<Models.PedidoJson.Pedido>();
+
+            using (var reader = new StringReader(fileContent))
+            {
+                var pedido = new Models.PedidoJson.Pedido();
+
+                string? line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    var fields = line.Split('§');
+                    var identifier = fields[0];
+
+                    switch (identifier)
+                    {
+                        case "22":
+                            // Parse order header
+                            pedido = new Models.PedidoJson.Pedido
+                            {
+                                Parcelas = new List<Models.PedidoJson.Parcela>(),
+                                Itens = new List<Models.PedidoJson.Item>(),
+                                Data = new DateTime(),
+                                Numero = Convert.ToInt32(fields[13])
+                            };
+
+                            pedido.Contato = new Models.PedidoJson.Contato(fields[12]);
+                            var parcela = new Models.PedidoJson.Parcela
+                            {
+                                //data = DateTime.Parse(fields[1]),
+                                //vlr = decimal.Parse(fields[2]),
+                                //obs = fields[3]
+                                FormaPagamento = new Models.PedidoJson.FormaPagamento{ Id = Convert.ToInt32(fields[4]) }
+                            };
+
+                            pedido.Parcelas.Add(parcela);
+                            break;
+                        case "24":
+                            // Parse order item
+                            var item = new Models.PedidoJson.Item
+                            {
+                                Codigo = fields[2],
+                                //descricao = fields[2],
+                                //un = fields[3],
+                                Quantidade = int.Parse(fields[3]),
+                                Valor = float.Parse(fields[5])
+                            };
+                            pedido.Itens.Add(item);
+                            break;
+                        case "23":
+                            if (pedido != null)
+                                if (cont > 2)
+                                    observacoes += string.Join(" ", fields.Skip(1));
+                            cont++;
+                            break;
+                        case "25":
+                            if (pedido != null)
+                            {
+                                if (!observacoes.Equals(""))
+                                    pedido.Observacoes = observacoes.ToString().Trim();
+
+                                pedidos.Add(pedido);
+                            }
+                            break;
+                    }
+                }
+            }
+            return pedidos;
+        }
+
     }
 }
 

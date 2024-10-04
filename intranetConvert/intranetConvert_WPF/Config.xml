@@ -3,4 +3,11 @@
   <CaminhoRemessa>.\arquivos\remessa.txt</CaminhoRemessa>
   <CaminhoCSV>.\arquivos\pedidos.csv</CaminhoCSV>
   <TempoDeEspera>10</TempoDeEspera>
+  <TipoIntegracao>CSV</TipoIntegracao>
+  <ApiBlingConfig>
+    <ClientId>ea9cf37975bef2b4ce42d3818531ab3ad2708a05</ClientId>
+    <ClientSecret>41d26b5610e9ab925076b1846e8a3f73ed516a36f0087ca9fe9756074488</ClientSecret>
+    <State>2224cb8c050f48d4ce5f8acbdd988aad</State>
+    <Url><!--https://www.bling.com.br/Api/v3/oauth/authorize?response_type=code&client_id=[clienteId]&state=[state]--></Url>
+  </ApiBlingConfig>
 </Configuracoes>

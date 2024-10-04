@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using intranetConvert_WPF.Integracao.bling.Models;
+using System.ComponentModel;
 
 public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
 {
@@ -46,19 +47,17 @@ public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
         }
     }
 
-    public string Error => null;
+    private string _tipoIntegracao;
 
-    private bool _forApi;
-
-    public bool ForApi
+    public string TipoIntegracao
     {
-        get => _forApi;
+        get => _tipoIntegracao;
         set
         {
-            if (_forApi != value)
+            if (_tipoIntegracao != value)
             {
-                _forApi = value;
-                OnPropertyChanged(nameof(ForApi));
+                _tipoIntegracao = value;
+                OnPropertyChanged(nameof(TipoIntegracao));
             }
         }
     }
@@ -90,6 +89,21 @@ public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
         }
     }
 
+    private ApiBlingConfig _apiBlingConfig;
+    public ApiBlingConfig ApiBlingConfig
+    {
+        get => _apiBlingConfig;
+        set
+        {
+            if (_apiBlingConfig != value)
+            {
+                _apiBlingConfig = value;
+                OnPropertyChanged(nameof(_apiBlingConfig));
+            }
+        }
+    }
+
+    public string Error => null;
     public string this[string columnName]
     {
         get

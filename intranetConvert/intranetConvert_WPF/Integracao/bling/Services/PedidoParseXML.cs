@@ -1,4 +1,4 @@
-﻿using intranetConvert_WPF.Integracao.bling.Models;
+﻿using intranetConvert_WPF.Integracao.bling.Models.PedidoXml;
 using System.Text;
 
 namespace intranetConvert_WPF.Integracao.bling.Services

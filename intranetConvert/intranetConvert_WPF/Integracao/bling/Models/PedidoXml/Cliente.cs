@@ -2,7 +2,7 @@
 using intranetConvert_WPF;
 using System.CodeDom;
 
-namespace intranetConvert_WPF.Integracao.bling.Models
+namespace intranetConvert_WPF.Integracao.bling.Models.PedidoXml
 {
     public class Cliente
     {
@@ -27,14 +27,15 @@ namespace intranetConvert_WPF.Integracao.bling.Models
 
         public Cliente(string cnpj)
         {
-            _ = BuscarDadosCliente(cnpj);
+            cpf_cnpj = cnpj;
+            _ = BuscarDadosCliente();
         }
 
-        private async Task<CNPJInfo> BuscarDadosCliente(string cnpj)
-        {
-            CNPJInfo cnpjInfo = await CNPJConsulta.ConsultarCNPJ(cnpj);
+        private async Task<CNPJInfo> BuscarDadosCliente()
+        {            
+            CNPJInfo cnpjInfo = await CNPJConsulta.ConsultarCNPJ(cpf_cnpj);
             if (cnpjInfo != null)
-            {
+            {               
                 nome = cnpjInfo.Nome;
                 tipoPessoa = "J";
                 endereco = cnpjInfo.Logradouro;

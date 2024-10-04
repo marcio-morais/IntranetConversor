@@ -4,8 +4,13 @@ using Ookii.Dialogs.Wpf;
 using System.IO;
 using System.Text;
 using System.Timers;
+using System.Web;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
+using Microsoft.Web.WebView2.Core;
+using intranetConvert_WPF.Integracao.bling.Models.PedidoJson;
+
 
 namespace intranetConvert_WPF
 {
@@ -14,11 +19,15 @@ namespace intranetConvert_WPF
         private NotifyIcon notifyIcon;
         private System.Timers.Timer _timer;
         private bool _isHidden = false;
+        private BlingApi blingApi;
+        private List<Pedido>  todosPedidosApi = new List<Pedido>();
 
         public MainWindow()
         {
             InitializeComponent();
+            //webBrowser.Source = new System.Uri("https://www.bling.com.br/login");
             CarregarConfiguracoes();
+            _ = GetAuthorizationCode();
         }
 
         private void ConfigurarTimer()
@@ -62,8 +71,13 @@ namespace intranetConvert_WPF
         private void OpenFromTray_Click(object sender, RoutedEventArgs e)
         {
             this.Show();
-            _timer.Stop();
-            _timer.Dispose();
+            try
+            {
+                _timer.Stop();
+                _timer.Dispose();
+            }
+            catch { }
+
             this.WindowState = WindowState.Normal;
             _isHidden = false;
         }
@@ -141,20 +155,26 @@ namespace intranetConvert_WPF
                 {
                     Directory.CreateDirectory(pastaDeArquivoDeRemessaProcessados);
                 }
-                var todosPedidosApi = new List<Pedido>();
+
+                todosPedidosApi = new List<Pedido>();
                 var todosPedidosCsv = new List<Dictionary<string, string>>();
 
                 foreach (string arquivo in arquivosRemessa)
                 {
-                    if (_configuracoes.ForApi == true)
+                    switch (_configuracoes.TipoIntegracao)
                     {
-                        var parser = new RemessaParssePedido(arquivo);
-                        todosPedidosApi.AddRange(parser.parssePedido());
-                    }
-                    else
-                    {
-                        var parser = new RemessaParser(arquivo);
-                        todosPedidosCsv.AddRange(await parser.ParseRemessa());
+                        case ("API"):
+                            {
+                                var parser = new RemessaParssePedido(arquivo);
+                                todosPedidosApi.AddRange(parser.parssePedidoJson());
+                            }
+                            break;
+                        case ("CSV"):
+                            {
+                                var parser = new RemessaParser(arquivo);
+                                todosPedidosCsv.AddRange(await parser.ParseRemessa());
+                            }
+                            break;
                     }
 
                     // Mover o arquivo processado
@@ -163,11 +183,15 @@ namespace intranetConvert_WPF
                     File.Move(arquivo, destino);
                 }
 
-                if (_configuracoes.ForApi == true)
-                    ExportToApi(todosPedidosApi);
-                else
-                    ExportToCsv(todosPedidosCsv, outputFile);
-
+                switch (_configuracoes.TipoIntegracao)
+                {
+                    case ("API"):
+                        ExportToApi();
+                        break;
+                    case ("CSV"):
+                        ExportToCsv(todosPedidosCsv, outputFile);
+                        break;
+                }
 
                 if (!_isHidden)
                     System.Windows.MessageBox.Show($"Conversão concluída. Arquivo CSV gerado: {outputFile}", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -179,31 +203,40 @@ namespace intranetConvert_WPF
             }
         }
 
-        private void ExportToApi(List<Pedido> todosPedidosApi)
-        {
-            throw new NotImplementedException();
-        }
-
         private void MenuItemConfiguracoes_Click(object sender, RoutedEventArgs e)
         {
             var configWindow = new ConfiguracoesWindow(_configuracoes);
             if (configWindow.ShowDialog() == true)
-            {
-                _configuracoes = configWindow.ConfiguracoesAtualizadas;
-                TxtInputFile.Text = _configuracoes.PastaRemessa;
-                TxtOutputFile.Text = _configuracoes.PastaCSV;
-            }
+                CarregarConfiguracoes();
         }
 
         private void CarregarConfiguracoes()
         {
             _configuracoes = ConfiguracaoManager.CarregarConfiguracoes();
-
             if (_configuracoes != null)
             {
                 TxtInputFile.Text = _configuracoes.PastaRemessa;
                 TxtOutputFile.Text = _configuracoes.PastaCSV;
+
+                grdIntegracaoIntegracaoPorCSV.Visibility = _configuracoes.TipoIntegracao.Equals("CSV") ?
+                    Visibility.Visible : Visibility.Collapsed;
             }
+        }
+
+        private async Task GetAuthorizationCode()
+        {
+            blingApi = new BlingApi(_configuracoes.ApiBlingConfig);
+
+            _configuracoes.ApiBlingConfig.State = blingApi.GenerateState();
+            string authorizationUrl = blingApi.GetAuthorizationUrl();
+
+            webBrowser.Source = new Uri(authorizationUrl);            
+        }
+
+        private void ExportToApi()
+        {
+            blingApi = new BlingApi(_configuracoes.ApiBlingConfig);
+            _ = blingApi.ExportToApiAsync(todosPedidosApi);
         }
 
         private void ExportToCsv(List<Dictionary<string, string>> pedidos, string outputFile)
@@ -265,6 +298,26 @@ namespace intranetConvert_WPF
             _timer.Dispose();
             this.WindowState = WindowState.Normal;
             _isHidden = false;
+        }
+
+        private async void WebBrowser_Navigated(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationStartingEventArgs e)
+        {
+                var uri = new Uri(e.Uri);
+            if (uri.AbsoluteUri.StartsWith("https://www.gestoque.com.br/"))
+            {
+                var query = HttpUtility.ParseQueryString(uri.Query);
+                string? code = query["code"];
+                string? state = query["state"];
+
+                if (!String.IsNullOrEmpty(state))
+                    _configuracoes.ApiBlingConfig.State = state;
+
+                if (!String.IsNullOrEmpty(code))
+                    _configuracoes.ApiBlingConfig.Code = code;
+                                
+                if (!String.IsNullOrEmpty(code))
+                  _configuracoes.ApiBlingConfig.Token = await blingApi.GetAccessTokenAsync(_configuracoes.ApiBlingConfig.Code);
+            }
         }
     }
 }
