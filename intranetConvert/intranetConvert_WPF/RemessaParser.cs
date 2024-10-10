@@ -35,7 +35,7 @@ namespace intranetConvert_WPF
             int cont = 0;
 
             string fileContent;
-            Encoding detectedEncoding = EncodingDetector.DetectTextEncoding(_inputFile, out fileContent);
+            EncodingDetector.DetectTextEncoding(_inputFile, out fileContent);
 
             using (var reader = new StringReader(fileContent))
             {
@@ -129,7 +129,8 @@ namespace intranetConvert_WPF
                 ["SKU"] = fields[2],
                 ["Quantidade"] = fields[3],
                 ["Valor Unitário"] = FormatPrice(fields[5]),
-                ["Valor Total"] = CalculateTotal(fields[3], fields[5])
+                ["Valor Total"] = CalculateTotal(fields[3], fields[5]).Replace(",", "."),
+                ["Total Pedido"] = CalculateTotal(fields[3], fields[5]).Replace(",",".")
             };
 
             pedido["Produtos"] += string.Join("|", produto.Select(kv => $"{kv.Key}:{kv.Value}")) + ";";
