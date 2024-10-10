@@ -54,7 +54,7 @@
                             </Style>
                         </RadioButton.Style>
                     </RadioButton>
-                    <RadioButton Grid.Column="2" x:Name="rdbTipoAPI" Content="API"  GroupName="tipoIntegracao" Margin="5,0" Checked="rdbTipoAPI_Checked"  >
+                    <RadioButton Grid.Column="2" x:Name="rdbTipoAPI" Content="API"  GroupName="tipoIntegracao" Margin="5,0" Checked="rdbTipoAPI_Checked" Visibility="Collapsed"  >
                         <RadioButton.Style>
                             <Style TargetType="RadioButton">
                                 <Style.Triggers>
@@ -73,8 +73,8 @@
                     <TextBlock Grid.Row="2"  Grid.Column="0" Text="Tempo de Espera (segundos):"  VerticalAlignment="Center" />
                     <TextBox   Grid.Row="2"  Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding TempoDeEspera, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="5" PreviewTextInput="NumberValidationTextBox"/>
                                                              
-                    <TextBlock Grid.Row="3"  Grid.Column="0" Text="Consultar Cnpj (Api):" VerticalAlignment="Center" />
-                    <TextBox   Grid.Row="3"  Grid.Column="1" Grid.ColumnSpan="2" Margin="5" VerticalAlignment="Center" IsEnabled="{Binding IsChecked, ElementName=chkConsultarCNPJ}" Text="{Binding ApiCNPJ, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" PreviewTextInput="NumberValidationTextBox"/>
+                    <TextBlock Grid.Row="3"  Grid.Column="0" Text="Caminho de consulta CNPJ:" VerticalAlignment="Center" />
+                    <TextBox   Grid.Row="3"  Grid.Column="1" Grid.ColumnSpan="2" Margin="5" VerticalAlignment="Center" IsEnabled="{Binding IsChecked, ElementName=chkConsultarCNPJ}" Text="{Binding CaminhoConsultaCnpj, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" PreviewTextInput="NumberValidationTextBox"/>
                     <CheckBox  Grid.Row="3"  Grid.Column="3" x:Name="chkConsultarCNPJ" Margin="5" VerticalAlignment="Center" IsChecked="{Binding ConsultarCNPJ, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
                 </Grid>
             </TabItem>

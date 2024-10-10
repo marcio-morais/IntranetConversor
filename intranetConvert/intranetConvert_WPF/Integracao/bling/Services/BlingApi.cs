@@ -58,9 +58,9 @@ public class BlingApi
         }
     }
    
-    public async Task ExportToApiAsync(List<Pedido> todosPedidosApi)
+    public async Task ExportToApiAsync(List<object> todosPedidosApi)
     {
-        foreach (var pedido in todosPedidosApi)
+        foreach (Pedido pedido in todosPedidosApi)
         {            
             await EnviarPedidoAsync(pedido, _config.Token.AccessToken);
         }

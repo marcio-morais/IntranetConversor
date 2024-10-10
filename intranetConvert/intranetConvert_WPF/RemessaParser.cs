@@ -129,7 +129,8 @@ namespace intranetConvert_WPF
                 ["SKU"] = fields[2],
                 ["Quantidade"] = fields[3],
                 ["Valor Unitário"] = FormatPrice(fields[5]),
-                ["Valor Total"] = CalculateTotal(fields[3], fields[5])
+                ["Valor Total"] = CalculateTotal(fields[3], fields[5]).Replace(",", "."),
+                ["Total Pedido"] = CalculateTotal(fields[3], fields[5]).Replace(",",".")
             };
 
             pedido["Produtos"] += string.Join("|", produto.Select(kv => $"{kv.Key}:{kv.Value}")) + ";";

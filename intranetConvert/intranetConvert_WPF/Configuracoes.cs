@@ -75,16 +75,16 @@ public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
         }
     }
 
-    private string _apiCNPJ;
-    public string ApiCNPJ
+    private string _caminhoConsultaCnpj;
+    public string CaminhoConsultaCnpj
     {
-        get => _apiCNPJ;
+        get => _caminhoConsultaCnpj;
         set
         {
-            if (_apiCNPJ != value)
+            if (_caminhoConsultaCnpj != value)
             {
-                _apiCNPJ = value;
-                OnPropertyChanged(nameof(_apiCNPJ));
+                _caminhoConsultaCnpj = value;
+                OnPropertyChanged(nameof(_caminhoConsultaCnpj));
             }
         }
     }
