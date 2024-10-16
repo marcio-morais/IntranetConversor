@@ -23,6 +23,7 @@ namespace intranetConvert_WPF
                 TipoIntegracao = configuracoesAtuais.TipoIntegracao,
                 ConsultarCNPJ = configuracoesAtuais.ConsultarCNPJ,
                 CaminhoConsultaCnpj = configuracoesAtuais.CaminhoConsultaCnpj,
+                UltimoPedido = configuracoesAtuais.UltimoPedido,
                 ApiBlingConfig = configuracoesAtuais.ApiBlingConfig
                 
             };
@@ -83,6 +84,7 @@ namespace intranetConvert_WPF
                     new XElement("TipoIntegracao", ConfiguracoesAtualizadas.TipoIntegracao),
                     new XElement("ConsultarCNPJ", ConfiguracoesAtualizadas.ConsultarCNPJ),
                     new XElement("CaminhoConsultaCnpj", ConfiguracoesAtualizadas.CaminhoConsultaCnpj),
+                    new XElement("UltimoPedido", ConfiguracoesAtualizadas.UltimoPedido),
                     new XElement("ApiBlingConfig",
                         new XElement("ClientId", ConfiguracoesAtualizadas.ApiBlingConfig.ClientId),
                         new XElement("ClientSecret", ConfiguracoesAtualizadas.ApiBlingConfig.ClientSecret),
@@ -144,7 +146,8 @@ namespace intranetConvert_WPF
                             TempoDeEspera = Convert.ToInt32(doc.Root.Element("TempoDeEspera")?.Value),
                             ConsultarCNPJ = Convert.ToBoolean(doc.Root.Element("ConsultarCNPJ")?.Value),
                             TipoIntegracao = doc.Root.Element("TipoIntegracao")?.Value ?? "",
-                            CaminhoConsultaCnpj = doc.Root.Element("CaminhoConsultaCnpj")?.Value ?? "",
+                            CaminhoConsultaCnpj = doc.Root.Element("CaminhoConsultaCnpj")?.Value ?? "",                            
+                            UltimoPedido = doc.Root.Element("UltimoPedido")?.Value ?? "0",
                             ApiBlingConfig = new ApiBlingConfig
                             {
                                 ClientId = doc.Root.Element("ApiBlingConfig")?.Element("ClientId")?.Value ?? "",
@@ -176,6 +179,7 @@ namespace intranetConvert_WPF
                 new XElement("TipoIntegracao", config.TipoIntegracao),
                 new XElement("ConsultarCNPJ", config.ConsultarCNPJ),
                 new XElement("CaminhoConsultaCnpj", config.CaminhoConsultaCnpj),
+                new XElement("UltimoPedido", config.UltimoPedido),
                 new XElement("ApiBlingConfig",
                     new XElement("ClientId", config.ApiBlingConfig.ClientId),
                     new XElement("ClientSecret", config.ApiBlingConfig.ClientSecret),

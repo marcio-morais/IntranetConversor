@@ -103,6 +103,20 @@ public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
         }
     }
 
+    private string _ultimoPedido;
+    public string UltimoPedido
+    { 
+        get => _ultimoPedido;
+        set
+        {
+            if (_ultimoPedido != value)
+            {
+                _ultimoPedido = value;
+                OnPropertyChanged(nameof(_ultimoPedido));
+            }
+        }
+    }
+
     public string Error => null;
     public string this[string columnName]
     {

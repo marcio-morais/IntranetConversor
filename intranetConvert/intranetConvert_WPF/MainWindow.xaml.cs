@@ -11,6 +11,7 @@ using System.Data;
 using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Data;
+using intranetConvert_WPF.UserControls;
 
 
 namespace intranetConvert_WPF
@@ -158,6 +159,8 @@ namespace intranetConvert_WPF
 
                 todosPedidos = new List<object>();
                 var todosPedidosCsv = new List<Dictionary<string, string>>();
+
+                var numPedido = InputBox.Show("Informe o numero do número do primeiro pedido.", _configuracoes.UltimoPedido);
 
                 foreach (string arquivo in arquivosRemessa)
                 {
@@ -403,6 +406,8 @@ namespace intranetConvert_WPF
 
             string[] arquivosRemessa = Directory.GetFiles(_configuracoes.PastaRemessa, "*.txt");
 
+            int numeroPedido = (Convert.ToInt32(_configuracoes.UltimoPedido) + 1);
+
             foreach (string arquivo in arquivosRemessa)
             {
                 switch (_configuracoes.TipoIntegracao)
@@ -417,7 +422,7 @@ namespace intranetConvert_WPF
                         {
 
                             var parser = new RemessaParser(arquivo);
-                            todosPedidos.AddRange(ProcessarPedidos(await parser.ParseRemessa()));
+                            todosPedidos.AddRange(ProcessarPedidos(await parser.ParseRemessa(numeroPedido)));
                         }
                         break;
                 }

@@ -27,9 +27,9 @@ namespace intranetConvert_WPF
             _inputFile = inputFile;
         }
 
-        public async Task<List<Dictionary<string, string>>> ParseRemessa()
+        public async Task<List<Dictionary<string, string>>> ParseRemessa(int numeroPedido = 0)
         {
-            var pedidos = new List<Dictionary<string, string>>();
+            var pedidos = new List<Dictionary<string, string>>();            
             Dictionary<string, string> currentPedido = null;
             string observacoes = "";
             int cont = 0;
@@ -51,6 +51,8 @@ namespace intranetConvert_WPF
                             {
                                 sequencia++;
                                 currentPedido = await ParsePedidoHeader(fields);
+                                //currentPedido["Número pedido"] = $"{fields[13]}_{sequencia}";
+                                currentPedido["Número pedido"] = $"{numeroPedido}";
                                 observacoes = "";
                             }
                             break;
@@ -72,9 +74,10 @@ namespace intranetConvert_WPF
                             if (currentPedido != null)
                             {
                                 if (!observacoes.Equals(""))
-                                    currentPedido["Observações"] = observacoes.ToString().Trim();
+                                    currentPedido["Observações Internas"] = observacoes.ToString().Trim();
 
                                 pedidos.Add(currentPedido);
+                                numeroPedido++;
                             }
                             break;
                     }
@@ -92,10 +95,11 @@ namespace intranetConvert_WPF
                 ["Forma Pagamento"] = fields[4],
                 ["Data"] = fields[8],
                 ["Data Prevista"] = fields[10],
-                ["CPF/CNPJ Comprador"] = fields[12],
-                ["Número pedido"] = $"{fields[13]}_{sequencia}",
-                ["Tipo Frete"] = fields[16] == "Normal" ? "Normal" : "Especial",
-                ["Observações"] = fields[17]
+                ["CPF/CNPJ Comprador"] = fields[12],                
+                //["Número pedido"] = $"{fields[13]}_{sequencia}",
+                ["Observações"] = $"Ordem de Compra:{fields[13]}",
+                ["Tipo Frete"] = fields[16] == "Normal" ? "Normal" : "Especial"
+                //["Observações"] = fields[17]
             };
 
             // Consulta CNPJ

@@ -34,6 +34,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>                        
                         <ColumnDefinition Width="auto"/>
@@ -76,6 +77,10 @@
                     <TextBlock Grid.Row="3"  Grid.Column="0" Text="Caminho de consulta CNPJ:" VerticalAlignment="Center" />
                     <TextBox   Grid.Row="3"  Grid.Column="1" Grid.ColumnSpan="2" Margin="5" VerticalAlignment="Center" IsEnabled="{Binding IsChecked, ElementName=chkConsultarCNPJ}" Text="{Binding CaminhoConsultaCnpj, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" PreviewTextInput="NumberValidationTextBox"/>
                     <CheckBox  Grid.Row="3"  Grid.Column="3" x:Name="chkConsultarCNPJ" Margin="5" VerticalAlignment="Center" IsChecked="{Binding ConsultarCNPJ, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+
+                    <TextBlock Grid.Row="4"  Grid.Column="0" Text="Número do ultimo pedido:"  VerticalAlignment="Center" />
+                    <TextBox   Grid.Row="4"  Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding UltimoPedido, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="5" PreviewTextInput="NumberValidationTextBox"/>
+
                 </Grid>
             </TabItem>
             <TabItem Header="CSV">

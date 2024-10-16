@@ -4,6 +4,7 @@
   <CaminhoCSV>.\arquivos\pedidos.csv</CaminhoCSV>
   <TempoDeEspera>10</TempoDeEspera>
   <TipoIntegracao>CSV</TipoIntegracao>
+  <UltimoPedido>0</UltimoPedido>
   <ApiBlingConfig>
     <ClientId>ea9cf37975bef2b4ce42d3818531ab3ad2708a05</ClientId>
     <ClientSecret>41d26b5610e9ab925076b1846e8a3f73ed516a36f0087ca9fe9756074488</ClientSecret>
