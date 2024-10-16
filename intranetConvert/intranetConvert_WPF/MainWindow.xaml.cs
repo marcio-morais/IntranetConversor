@@ -12,6 +12,8 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Data;
 using intranetConvert_WPF.UserControls;
+using intranetConvert_WPF.Integracao.bling.Models.PedidoJson;
+using System.Runtime.ConstrainedExecution;
 
 
 namespace intranetConvert_WPF
@@ -24,6 +26,8 @@ namespace intranetConvert_WPF
         private BlingApi blingApi;
         private List<object> todosPedidos = new();
         private static List<CNPJInfo> listaCNPJs = new List<CNPJInfo>();
+        private string numeroPedido = "";
+        List<string> arquivosRemessaCarregados = new();
 
         public MainWindow()
         {
@@ -147,43 +151,49 @@ namespace intranetConvert_WPF
 
                 string pastaProcessados = Path.Combine(_configuracoes.PastaRemessa, "jaProcessados");
                 if (!Directory.Exists(pastaProcessados))
-                {
                     Directory.CreateDirectory(pastaProcessados);
-                }
 
                 var pastaDeArquivoDeRemessaProcessados = Path.Combine(_configuracoes.PastaRemessa + "\\jaProcessados\\", nomeArquivoCsv);
                 if (!Directory.Exists(pastaDeArquivoDeRemessaProcessados))
-                {
                     Directory.CreateDirectory(pastaDeArquivoDeRemessaProcessados);
+
+
+                if (todosPedidos == null)
+                    todosPedidos = new List<object>();
+
+                if (todosPedidos.Count() == 0)
+                {
+                    int numeroPedido = Convert.ToInt32(InputBox.Show("Informe o número do primeiro pedido a ser gerado.", _configuracoes.UltimoPedido));
+                    foreach (string arquivo in arquivosRemessa)
+                    {
+                        numeroPedido++;
+                        switch (_configuracoes.TipoIntegracao)
+                        {
+                            case ("API"):
+                                {
+                                    var parser = new RemessaParssePedido(arquivo);
+                                    todosPedidos.AddRange(parser.parssePedidoJson());
+                                }
+                                break;
+                            case ("CSV"):
+                                {
+                                    var parser = new RemessaParser(arquivo);
+                                    todosPedidos.AddRange(await parser.ParseRemessa(numeroPedido));
+                                }
+                                break;
+                        }
+
+                        if (!arquivosRemessaCarregados.Contains(arquivo))
+                            arquivosRemessaCarregados.Add(arquivo);
+                    }
                 }
 
-                todosPedidos = new List<object>();
-                var todosPedidosCsv = new List<Dictionary<string, string>>();
-
-                var numPedido = InputBox.Show("Informe o numero do número do primeiro pedido.", _configuracoes.UltimoPedido);
-
-                foreach (string arquivo in arquivosRemessa)
+                foreach (var arquivo in arquivosRemessaCarregados)
                 {
-                    switch (_configuracoes.TipoIntegracao)
-                    {
-                        case ("API"):
-                            {
-                                var parser = new RemessaParssePedido(arquivo);
-                                todosPedidos.AddRange(parser.parssePedidoJson());
-                            }
-                            break;
-                        case ("CSV"):
-                            {
-                                var parser = new RemessaParser(arquivo);
-                                todosPedidos.AddRange(await parser.ParseRemessa());
-                            }
-                            break;
-                    }
-
                     // Mover o arquivo processado
                     string nomeArquivo = Path.GetFileName(arquivo);
                     string destino = Path.Combine(pastaDeArquivoDeRemessaProcessados, nomeArquivo);
-                    File.Move(arquivo, destino);                    
+                    File.Move(arquivo, destino);
                 }
 
                 switch (_configuracoes.TipoIntegracao)
@@ -193,6 +203,8 @@ namespace intranetConvert_WPF
                         break;
                     case ("CSV"):
                         ExportToCsv(outputFile);
+                        _configuracoes.UltimoPedido = todosPedidos.Count() > 0 ? ((PedidoCSV)todosPedidos.Last()).NumeroPedido : (Convert.ToInt32(_configuracoes.UltimoPedido)).ToString();
+                        ConfiguracaoManager.SalvarConfiguracoes(_configuracoes);
                         break;
                 }
 
@@ -262,7 +274,7 @@ namespace intranetConvert_WPF
             _ = blingApi.ExportToApiAsync(todosPedidos);
         }
 
-        private void ExportToCsv(string outputFile)
+        private void ExportToCsv(string outputFile, string a = "")
         {
             using (var writer = new StreamWriter(outputFile, false, Encoding.UTF8))
             {
@@ -295,6 +307,63 @@ namespace intranetConvert_WPF
                     else
                     {
                         writer.WriteLine(FormatCsvLine(pedido));
+                    }
+                }
+            }
+        }
+
+        private void ExportToCsv(string outputFile)
+        {
+            using (var writer = new StreamWriter(outputFile, false, Encoding.UTF8))
+            {
+                writer.WriteLine(string.Join(",", RemessaParser._csvHeader));
+                foreach (PedidoCSV pedido in todosPedidos)
+                {
+                    foreach (var produto in pedido.Produtos)
+                    {
+                        var line = new StringBuilder();
+                        line.Append($"\"{pedido.NumeroPedido}\",");
+                        line.Append($"\"{pedido.NomeComprador}\",");
+                        line.Append($"\"{pedido.Data}\",");
+                        line.Append($"\"{pedido.CpfCnpjComprador}\",");
+                        line.Append($"\"{pedido.EnderecoComprador}\",");
+                        line.Append($"\"{pedido.BairroComprador}\",");
+                        line.Append($"\"{pedido.NumeroComprador}\",");
+                        line.Append($"\"{pedido.ComplementoComprador}\",");
+                        line.Append($"\"{pedido.CepComprador}\",");
+                        line.Append($"\"{pedido.CidadeComprador}\",");
+                        line.Append($"\"{pedido.UfComprador}\",");
+                        line.Append($"\"{pedido.TelefoneComprador}\",");
+                        line.Append(","); // Celular Comprador
+                        line.Append($"\"{pedido.EmailComprador}\",");
+                        line.Append(","); // Produto
+                        line.Append($"\"{produto.SKU}\",");
+                        line.Append(","); // Unidade
+                        line.Append($"{produto.Quantidade},");
+                        line.Append($"{produto.ValorUnitario},");
+                        line.Append($"{produto.ValorTotal},");
+                        line.Append(","); // Valor Frete Pedido
+                        line.Append(","); // Valor Desconto Pedido
+                        line.Append(","); // Outras despesas
+                        line.Append(","); // Nome Entrega
+                        line.Append(","); // Endereço Entrega
+                        line.Append(","); // Número Entrega
+                        line.Append(","); // Complemento Entrega
+                        line.Append(","); // Cidade Entrega
+                        line.Append(","); // UF Entrega
+                        line.Append(","); // CEP Entrega
+                        line.Append(","); // Bairro Entrega
+                        line.Append(","); // Transportadora
+                        line.Append(","); // Serviço
+                        line.Append($"\"{pedido.TipoFrete}\",");
+                        line.Append($"\"{pedido.Observacoes}\",");
+                        line.Append(","); // Qtd Parcela
+                        line.Append(","); // Data Prevista
+                        line.Append(","); // Vendedor
+                        line.Append($"\"{pedido.FormaPagamento}\"");
+                        // ID Forma Pagamento
+
+                        writer.WriteLine(line.ToString());
                     }
                 }
             }
@@ -351,6 +420,8 @@ namespace intranetConvert_WPF
                     System.Windows.MessageBox.Show("Pasta de origem e de destino são obrigatórios.");
 
                 dtgPedidosList.Visibility = Visibility.Collapsed;
+                btnConverter.Visibility = Visibility.Collapsed;
+
                 return;
             }
 
@@ -361,13 +432,33 @@ namespace intranetConvert_WPF
                     System.Windows.MessageBox.Show("Nenhum arquivo de remessa encontrado na pasta especificada.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
 
                 dtgPedidosList.Visibility = Visibility.Collapsed;
+                btnConverter.Visibility = Visibility.Collapsed;
+
                 return;
             }
 
-            dtgPedidosList.Visibility = Visibility.Visible;
-            var view = (CollectionView)CollectionViewSource.GetDefaultView(await carregarTodosPedidosListAsync());
-            dtgPedidosList.ItemsSource = view;
-            AddButtonColumn();
+            await carregarTodosPedidosListAsync();
+
+            // Limpa as colunas existentes no DataGrid
+            dtgPedidosList.Columns.Clear();
+
+            // Define a fonte de itens como nula para resetar o DataGrid
+            dtgPedidosList.ItemsSource = null;
+
+            if (todosPedidos.Count() > 0)
+            {
+                AddButtonColumn();
+
+                dtgPedidosList.Visibility = Visibility.Visible;
+                var view = (CollectionView)CollectionViewSource.GetDefaultView(todosPedidos);
+                dtgPedidosList.ItemsSource = view;
+
+                btnConverter.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                btnConverter.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void dtgPedidosList_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
@@ -397,16 +488,14 @@ namespace intranetConvert_WPF
 
         private async Task<List<object>> carregarTodosPedidosListAsync()
         {
-            var todosPedidos = new List<object>();
+            todosPedidos = new List<object>();
 
             string nomeArquivoCsv = $"pedidos_FC_{DateTime.Now:yyyyMMdd_HHmmss}";
             string outputFile = Path.Combine(_configuracoes.PastaCSV, $"{nomeArquivoCsv}.csv");
 
-            string pastaProcessados = Path.Combine(_configuracoes.PastaRemessa, "jaProcessados");
-
             string[] arquivosRemessa = Directory.GetFiles(_configuracoes.PastaRemessa, "*.txt");
 
-            int numeroPedido = (Convert.ToInt32(_configuracoes.UltimoPedido) + 1);
+            numeroPedido = InputBox.Show("Informe o número do primeiro pedido a ser gerado.", _configuracoes.UltimoPedido);
 
             foreach (string arquivo in arquivosRemessa)
             {
@@ -420,12 +509,15 @@ namespace intranetConvert_WPF
                         break;
                     case ("CSV"):
                         {
-
+                            numeroPedido = todosPedidos.Count() > 0 ? ((PedidoCSV)todosPedidos.Last()).NumeroPedido : (Convert.ToInt32(numeroPedido) + 1).ToString();
                             var parser = new RemessaParser(arquivo);
-                            todosPedidos.AddRange(ProcessarPedidos(await parser.ParseRemessa(numeroPedido)));
+                            todosPedidos.AddRange(ProcessarPedidos(await parser.ParseRemessa(Convert.ToInt32(numeroPedido))));
                         }
                         break;
                 }
+
+                if (!arquivosRemessaCarregados.Contains(arquivo))
+                    arquivosRemessaCarregados.Add(arquivo);
             }
 
             return todosPedidos;
@@ -510,20 +602,35 @@ namespace intranetConvert_WPF
 
         private void AddButtonColumn()
         {
-            DataGridTemplateColumn buttonColumn = new DataGridTemplateColumn();
-            buttonColumn.Header = "::";
+            // Verifica se a coluna já existe
+            bool columnExists = false;
+            foreach (var column in dtgPedidosList.Columns)
+            {
+                if (column is DataGridTemplateColumn templateColumn &&
+                    templateColumn.Header.ToString() == "::")
+                {
+                    columnExists = true;
+                    break;
+                }
+            }
 
-            DataTemplate buttonTemplate = new DataTemplate();
-            FrameworkElementFactory buttonFactory = new FrameworkElementFactory(typeof(System.Windows.Controls.Button));
-            buttonFactory.SetValue(System.Windows.Controls.Button.ContentProperty, "Ver Itens");
-            buttonFactory.AddHandler(System.Windows.Controls.Button.ClickEvent, new RoutedEventHandler(ToggleRowDetails_Click));
-            buttonTemplate.VisualTree = buttonFactory;
+            // Se a coluna não existir, adicione-a
+            if (!columnExists)
+            {
+                DataGridTemplateColumn buttonColumn = new DataGridTemplateColumn();
+                buttonColumn.Header = "::";
 
-            buttonColumn.CellTemplate = buttonTemplate;
+                DataTemplate buttonTemplate = new DataTemplate();
+                FrameworkElementFactory buttonFactory = new FrameworkElementFactory(typeof(System.Windows.Controls.Button));
+                buttonFactory.SetValue(System.Windows.Controls.Button.ContentProperty, "Ver Itens");
+                buttonFactory.AddHandler(System.Windows.Controls.Button.ClickEvent, new RoutedEventHandler(ToggleRowDetails_Click));
+                buttonTemplate.VisualTree = buttonFactory;
 
-            dtgPedidosList.Columns.Add(buttonColumn);
+                buttonColumn.CellTemplate = buttonTemplate;
+
+                dtgPedidosList.Columns.Add(buttonColumn);
+            }
         }
-
         private void ToggleRowDetails_Click(object sender, RoutedEventArgs e)
         {
             var button = (System.Windows.Controls.Button)sender;

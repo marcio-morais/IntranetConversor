@@ -97,7 +97,7 @@ namespace intranetConvert_WPF
                 ["Data Prevista"] = fields[10],
                 ["CPF/CNPJ Comprador"] = fields[12],                
                 //["Número pedido"] = $"{fields[13]}_{sequencia}",
-                ["Observações"] = $"Ordem de Compra:{fields[13]}",
+                ["Observações"] = $"Ordem de Compra: {fields[13]}",
                 ["Tipo Frete"] = fields[16] == "Normal" ? "Normal" : "Especial"
                 //["Observações"] = fields[17]
             };

@@ -48,9 +48,9 @@
 
             <DockPanel Grid.Row="5" Margin="0,5">
                 <WrapPanel DockPanel.Dock="Bottom" HorizontalAlignment="Right">
-                    <Button Content="Carregar" Width="80" Height="30" Click="btnCarregar_Click" Margin="5,5,0,0" />
-                    <Button Content="Converter"  Width="80" Height="30" Click="btnConverter_Click" Margin="5,5,0,0" />
-                    <Button Content="Ocultar" Width="80" Height="30" Click="MinimizeToBandeja_Click" Margin="5,5,0,0" />
+                    <Button x:Name="btnCarregar" Content="Carregar" Width="80" Height="30" Click="btnCarregar_Click" Margin="5,5,0,0" />
+                    <Button x:Name="btnConverter" Content="Converter"  Width="80" Height="30" Click="btnConverter_Click" Margin="5,5,0,0" Visibility="Collapsed" />
+                    <Button x:Name="btnOcultar" Content="Ocultar" Width="80" Height="30" Click="MinimizeToBandeja_Click" Margin="5,5,0,0" />
                     <!-- NotifyIcon para a bandeja do sistema -->
                     <tb:TaskbarIcon x:Name="NotifyIcon"
                                     IconSource="Resources/IconConvert_borda_White.ico"

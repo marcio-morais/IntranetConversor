@@ -20,7 +20,6 @@ namespace intranetConvert_WPF.UserControls
     public partial class InputBox : UserControl
     {
         public string InputText { get; private set; }
-        public bool DialogResult { get; private set; }
 
         public InputBox()
         {
@@ -30,33 +29,45 @@ namespace intranetConvert_WPF.UserControls
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             InputText = InputTextBox.Text;
-            DialogResult = true;
-            ((Window)this.Parent).Close();
+            Window parentWindow = Window.GetWindow(this);
+            if (parentWindow != null)
+            {
+                parentWindow.DialogResult = true;
+                parentWindow.Close();
+            }
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
-            ((Window)this.Parent).Close();
+            Window parentWindow = Window.GetWindow(this);
+            if (parentWindow != null)
+            {
+                parentWindow.DialogResult = false;
+                parentWindow.Close();
+            }
         }
 
         public static string Show(string message, string defaultValue = "")
         {
+            InputBox inputBoxControl = new InputBox
+            {
+                MessageText = { Text = message },
+                InputTextBox = { Text = defaultValue }
+            };
+
             Window window = new Window
             {
                 Title = "Entrada de Dados",
-                Content = new InputBox { MessageText = { Text = message }, InputTextBox = { Text = defaultValue } },
+                Content = inputBoxControl,
                 SizeToContent = SizeToContent.WidthAndHeight,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                WindowStyle = WindowStyle.ToolWindow
+                WindowStyle = WindowStyle.ToolWindow,
+                ShowInTaskbar = false,
+                Topmost = true
             };
 
-            if (window.ShowDialog() == true)
-            {
-                return ((InputBox)window.Content).InputText;
-            }
-
-            return null;
+            bool? dialogResult = window.ShowDialog();
+            return dialogResult == true ? inputBoxControl.InputText : null;
         }
     }
 }
