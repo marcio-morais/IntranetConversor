@@ -1,8 +1,10 @@
-﻿using Ookii.Dialogs.Wpf;
+﻿using intranetConvert_WPF.Integracao.bling.Models;
+using Ookii.Dialogs.Wpf;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Linq;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace intranetConvert_WPF
 {
@@ -17,7 +19,13 @@ namespace intranetConvert_WPF
             {
                 PastaRemessa = configuracoesAtuais.PastaRemessa,
                 PastaCSV = configuracoesAtuais.PastaCSV,
-                TempoDeEspera = configuracoesAtuais.TempoDeEspera
+                TempoDeEspera = configuracoesAtuais.TempoDeEspera,
+                TipoIntegracao = configuracoesAtuais.TipoIntegracao,
+                ConsultarCNPJ = configuracoesAtuais.ConsultarCNPJ,
+                CaminhoConsultaCnpj = configuracoesAtuais.CaminhoConsultaCnpj,
+                UltimoPedido = configuracoesAtuais.UltimoPedido,
+                ApiBlingConfig = configuracoesAtuais.ApiBlingConfig
+                
             };
             DataContext = ConfiguracoesAtualizadas;
         }
@@ -55,19 +63,41 @@ namespace intranetConvert_WPF
 
         private void SalvarConfiguracoes()
         {
+            if (ConfiguracoesAtualizadas.TipoIntegracao.Equals("API"))
+            {
+                ApiBlingConfig apiBlingConfig = new ApiBlingConfig
+                {
+                    ClientId = txtApiBlingConfigClientId.Text,
+                    ClientSecret = txtApiBlingConfigClientSecret.Text,
+                    State = txtApiBlingConfigState.Text,
+                    Url = txtApiBlingConfigUrl.Text
+                };
+
+                ConfiguracoesAtualizadas.ApiBlingConfig = apiBlingConfig;
+            }
+
             XDocument xdoc = new XDocument(
                 new XElement("Configuracoes",
                     new XElement("PastaRemessa", ConfiguracoesAtualizadas.PastaRemessa),
                     new XElement("PastaCSV", ConfiguracoesAtualizadas.PastaCSV),
-                    new XElement("TempoDeEspera", ConfiguracoesAtualizadas.TempoDeEspera)
-
+                    new XElement("TempoDeEspera", ConfiguracoesAtualizadas.TempoDeEspera),
+                    new XElement("TipoIntegracao", ConfiguracoesAtualizadas.TipoIntegracao),
+                    new XElement("ConsultarCNPJ", ConfiguracoesAtualizadas.ConsultarCNPJ),
+                    new XElement("CaminhoConsultaCnpj", ConfiguracoesAtualizadas.CaminhoConsultaCnpj),
+                    new XElement("UltimoPedido", ConfiguracoesAtualizadas.UltimoPedido),
+                    new XElement("ApiBlingConfig",
+                        new XElement("ClientId", ConfiguracoesAtualizadas.ApiBlingConfig.ClientId),
+                        new XElement("ClientSecret", ConfiguracoesAtualizadas.ApiBlingConfig.ClientSecret),
+                        new XElement("State", ConfiguracoesAtualizadas.ApiBlingConfig.State),
+                        new XElement("Url", ConfiguracoesAtualizadas.ApiBlingConfig.Url)
+                    )
                 )
             );
 
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             string configPath = Path.Combine(appDataPath, "IntranetConvert");
             Directory.CreateDirectory(configPath);
-            string configFile = Path.Combine(configPath, "config.xml");
+            string configFile = Path.Combine(configPath, "Config.xml");
 
             xdoc.Save(configFile);
         }
@@ -83,13 +113,23 @@ namespace intranetConvert_WPF
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        private void rdbTipoCSV_Checked(object sender, RoutedEventArgs e)
+        {
+            ConfiguracoesAtualizadas.TipoIntegracao = "CSV";
+        }
+
+        private void rdbTipoAPI_Checked(object sender, RoutedEventArgs e)
+        {
+            ConfiguracoesAtualizadas.TipoIntegracao = "API";
+        }
     }
 
     public static class ConfiguracaoManager
     {
         private static readonly string AppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         private static readonly string ConfigPath = Path.Combine(AppDataPath, "IntranetConvert");
-        private static readonly string ConfigFile = Path.Combine(ConfigPath, "config.xml");
+        private static readonly string ConfigFile = Path.Combine(ConfigPath, "Config.xml");
 
         public static Configuracoes CarregarConfiguracoes()
         {
@@ -103,7 +143,18 @@ namespace intranetConvert_WPF
                         {
                             PastaRemessa = doc.Root.Element("PastaRemessa")?.Value ?? "",
                             PastaCSV = doc.Root.Element("PastaCSV")?.Value ?? "",
-                            TempoDeEspera = Convert.ToInt32(doc.Root.Element("TempoDeEspera")?.Value)
+                            TempoDeEspera = Convert.ToInt32(doc.Root.Element("TempoDeEspera")?.Value),
+                            ConsultarCNPJ = Convert.ToBoolean(doc.Root.Element("ConsultarCNPJ")?.Value),
+                            TipoIntegracao = doc.Root.Element("TipoIntegracao")?.Value ?? "",
+                            CaminhoConsultaCnpj = doc.Root.Element("CaminhoConsultaCnpj")?.Value ?? "",                            
+                            UltimoPedido = doc.Root.Element("UltimoPedido")?.Value ?? "0",
+                            ApiBlingConfig = new ApiBlingConfig
+                            {
+                                ClientId = doc.Root.Element("ApiBlingConfig")?.Element("ClientId")?.Value ?? "",
+                                ClientSecret = doc.Root.Element("ApiBlingConfig")?.Element("ClientSecret")?.Value ?? "",
+                                State = doc.Root.Element("ApiBlingConfig")?.Element("State")?.Value ?? "",
+                                Url = doc.Root.Element("ApiBlingConfig")?.Element("Url")?.Value ?? ""
+                            }
                         };
                 }
                 catch (Exception)
@@ -117,14 +168,26 @@ namespace intranetConvert_WPF
 
         public static void SalvarConfiguracoes(Configuracoes config)
         {
-            XDocument doc = new XDocument(
-                new XElement("Configuracoes",
-                    new XElement("PastaRemessa", config.PastaRemessa),
-                    new XElement("PastaCSV", config.PastaCSV),
-                    new XElement("TempoDeEspera", config.TempoDeEspera)
 
+
+
+            XDocument doc = new XDocument(
+            new XElement("Configuracoes",
+                new XElement("PastaRemessa", config.PastaRemessa),
+                new XElement("PastaCSV", config.PastaCSV),
+                new XElement("TempoDeEspera", config.TempoDeEspera),
+                new XElement("TipoIntegracao", config.TipoIntegracao),
+                new XElement("ConsultarCNPJ", config.ConsultarCNPJ),
+                new XElement("CaminhoConsultaCnpj", config.CaminhoConsultaCnpj),
+                new XElement("UltimoPedido", config.UltimoPedido),
+                new XElement("ApiBlingConfig",
+                    new XElement("ClientId", config.ApiBlingConfig.ClientId),
+                    new XElement("ClientSecret", config.ApiBlingConfig.ClientSecret),
+                    new XElement("State", config.ApiBlingConfig.State),
+                    new XElement("Url", config.ApiBlingConfig.Url)
                 )
-            );
+            )
+        );
             doc.Save(ConfigFile);
         }
     }

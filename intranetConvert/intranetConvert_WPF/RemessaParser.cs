@@ -7,6 +7,7 @@ namespace intranetConvert_WPF
     {
         private readonly string _inputFile;
         private readonly string _outputFile;
+        public int sequencia = 0;
 
         public static readonly string[] _csvHeader = new[]
         {
@@ -26,15 +27,15 @@ namespace intranetConvert_WPF
             _inputFile = inputFile;
         }
 
-        public async Task<List<Dictionary<string, string>>> ParseRemessa()
+        public async Task<List<Dictionary<string, string>>> ParseRemessa(int numeroPedido = 0)
         {
-            var pedidos = new List<Dictionary<string, string>>();
+            var pedidos = new List<Dictionary<string, string>>();            
             Dictionary<string, string> currentPedido = null;
             string observacoes = "";
             int cont = 0;
 
             string fileContent;
-            Encoding detectedEncoding = EncodingDetector.DetectTextEncoding(_inputFile, out fileContent);
+            EncodingDetector.DetectTextEncoding(_inputFile, out fileContent);
 
             using (var reader = new StringReader(fileContent))
             {
@@ -47,10 +48,14 @@ namespace intranetConvert_WPF
                     switch (identifier)
                     {
                         case "22":
-                            currentPedido = await ParsePedidoHeader(fields);
-                            observacoes = "";
+                            {
+                                sequencia++;
+                                currentPedido = await ParsePedidoHeader(fields);
+                                //currentPedido["Número pedido"] = $"{fields[13]}_{sequencia}";
+                                currentPedido["Número pedido"] = $"{numeroPedido}";
+                                observacoes = "";
+                            }
                             break;
-
                         case "23":
                             {
                                 if (currentPedido != null)
@@ -64,16 +69,19 @@ namespace intranetConvert_WPF
                             if (currentPedido != null)
                                 ParsePedidoItem(fields, currentPedido);
                             break;
+
+                        case "25":
+                            if (currentPedido != null)
+                            {
+                                if (!observacoes.Equals(""))
+                                    currentPedido["Observações Internas"] = observacoes.ToString().Trim();
+
+                                pedidos.Add(currentPedido);
+                                numeroPedido++;
+                            }
+                            break;
                     }
                 }
-            }
-
-            if (currentPedido != null)
-            {
-                if (!observacoes.Equals(""))
-                    currentPedido["Observações"] = observacoes.ToString().Trim();
-
-                pedidos.Add(currentPedido);
             }
 
             return pedidos;
@@ -83,13 +91,15 @@ namespace intranetConvert_WPF
         {
             var pedido = new Dictionary<string, string>
             {
-                ["ID Forma Pagamento"] = fields[4],
+                //["ID Forma Pagamento"] = fields[4],
+                ["Forma Pagamento"] = fields[4],
                 ["Data"] = fields[8],
                 ["Data Prevista"] = fields[10],
-                ["CPF/CNPJ Comprador"] = fields[12],
-                ["Número pedido"] = fields[13],
-                ["Tipo Frete"] = fields[16] == "Normal" ? "Normal" : "Especial",
-                ["Observações"] = fields[17]
+                ["CPF/CNPJ Comprador"] = fields[12],                
+                //["Número pedido"] = $"{fields[13]}_{sequencia}",
+                ["Observações"] = $"Ordem de Compra: {fields[13]}",
+                ["Tipo Frete"] = fields[16] == "Normal" ? "Normal" : "Especial"
+                //["Observações"] = fields[17]
             };
 
             // Consulta CNPJ
@@ -123,7 +133,8 @@ namespace intranetConvert_WPF
                 ["SKU"] = fields[2],
                 ["Quantidade"] = fields[3],
                 ["Valor Unitário"] = FormatPrice(fields[5]),
-                ["Valor Total"] = CalculateTotal(fields[3], fields[5])
+                ["Valor Total"] = CalculateTotal(fields[3], fields[5]).Replace(",", "."),
+                ["Total Pedido"] = CalculateTotal(fields[3], fields[5]).Replace(",",".")
             };
 
             pedido["Produtos"] += string.Join("|", produto.Select(kv => $"{kv.Key}:{kv.Value}")) + ";";

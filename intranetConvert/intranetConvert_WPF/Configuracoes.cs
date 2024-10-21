@@ -1,9 +1,9 @@
-﻿using System.ComponentModel;
+﻿using intranetConvert_WPF.Integracao.bling.Models;
+using System.ComponentModel;
 
 public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
 {
     private string _pastaRemessa;
-
     public string PastaRemessa
     {
         get => _pastaRemessa;
@@ -47,8 +47,77 @@ public class Configuracoes : INotifyPropertyChanged, IDataErrorInfo
         }
     }
 
-    public string Error => null;
+    private string _tipoIntegracao;
 
+    public string TipoIntegracao
+    {
+        get => _tipoIntegracao;
+        set
+        {
+            if (_tipoIntegracao != value)
+            {
+                _tipoIntegracao = value;
+                OnPropertyChanged(nameof(TipoIntegracao));
+            }
+        }
+    }
+
+    private bool _consultarCNPJ;
+    public bool ConsultarCNPJ {
+        get => _consultarCNPJ;
+        set
+        {
+            if (_consultarCNPJ != value)
+            {
+                _consultarCNPJ = value;
+                OnPropertyChanged(nameof(_consultarCNPJ));
+            }
+        }
+    }
+
+    private string _caminhoConsultaCnpj;
+    public string CaminhoConsultaCnpj
+    {
+        get => _caminhoConsultaCnpj;
+        set
+        {
+            if (_caminhoConsultaCnpj != value)
+            {
+                _caminhoConsultaCnpj = value;
+                OnPropertyChanged(nameof(_caminhoConsultaCnpj));
+            }
+        }
+    }
+
+    private ApiBlingConfig _apiBlingConfig;
+    public ApiBlingConfig ApiBlingConfig
+    {
+        get => _apiBlingConfig;
+        set
+        {
+            if (_apiBlingConfig != value)
+            {
+                _apiBlingConfig = value;
+                OnPropertyChanged(nameof(_apiBlingConfig));
+            }
+        }
+    }
+
+    private string _ultimoPedido;
+    public string UltimoPedido
+    { 
+        get => _ultimoPedido;
+        set
+        {
+            if (_ultimoPedido != value)
+            {
+                _ultimoPedido = value;
+                OnPropertyChanged(nameof(_ultimoPedido));
+            }
+        }
+    }
+
+    public string Error => null;
     public string this[string columnName]
     {
         get
