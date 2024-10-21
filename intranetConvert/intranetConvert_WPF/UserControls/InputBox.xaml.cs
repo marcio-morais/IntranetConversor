@@ -47,15 +47,24 @@ namespace intranetConvert_WPF.UserControls
             }
         }
 
+        private static Window _windowInstance;
+
         public static string Show(string message, string defaultValue = "")
         {
+            // Se a janela já estiver aberta, traga-a para frente
+            if (_windowInstance != null && _windowInstance.IsVisible)
+            {
+                _windowInstance.Activate();
+                return ((InputBox)_windowInstance.Content).InputText; // Retorna o texto atual
+            }
+
             InputBox inputBoxControl = new InputBox
             {
                 MessageText = { Text = message },
                 InputTextBox = { Text = defaultValue }
             };
 
-            Window window = new Window
+            _windowInstance = new Window
             {
                 Title = "Entrada de Dados",
                 Content = inputBoxControl,
@@ -66,8 +75,13 @@ namespace intranetConvert_WPF.UserControls
                 Topmost = true
             };
 
-            bool? dialogResult = window.ShowDialog();
-            return dialogResult == true ? inputBoxControl.InputText : null;
+            bool? dialogResult = _windowInstance.ShowDialog();
+            string result = dialogResult == true ? inputBoxControl.InputText : null;
+
+            // Limpar a referência após fechar a janela
+            _windowInstance = null;
+
+            return result;
         }
     }
 }

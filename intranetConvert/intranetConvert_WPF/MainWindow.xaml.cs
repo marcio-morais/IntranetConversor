@@ -14,6 +14,8 @@ using System.Windows.Data;
 using intranetConvert_WPF.UserControls;
 using intranetConvert_WPF.Integracao.bling.Models.PedidoJson;
 using System.Runtime.ConstrainedExecution;
+using NPOI.SS.Formula.Functions;
+using intranetConvert_WPF.Resources;
 
 
 namespace intranetConvert_WPF
@@ -29,18 +31,29 @@ namespace intranetConvert_WPF
         private string numeroPedido = "";
         List<string> arquivosRemessaCarregados = new();
 
+        public static string SystemVersion { get; set; }
+
         public MainWindow()
         {
             InitializeComponent();
             CarregarConfiguracoes();
+
+            SystemVersion = GetSystemVersion();
+            DataContext = this;
+        }
+
+        private string GetSystemVersion()
+        {
+            // Lógica para obter a versão do sistema
+            return "Sistema de Integração de Pedidos - Eco X First Class (v.1.0.12)"; // Exemplo de versão
         }
 
         private void ConfigurarTimer()
         {
-            _timer = new System.Timers.Timer(_configuracoes.TempoDeEspera * 1000); // 1000 milissegundos  = 1s
-            _timer.Elapsed += Timer_Elapsed;
-            _timer.AutoReset = true;
-            _timer.Enabled = true;
+            //_timer = new System.Timers.Timer(_configuracoes.TempoDeEspera * 1000); // 1000 milissegundos  = 1s
+            //_timer.Elapsed += Timer_Elapsed;
+            //_timer.AutoReset = true;
+            //_timer.Enabled = true;
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -50,7 +63,8 @@ namespace intranetConvert_WPF
                 // Invoque o método btnConverter_Click na thread da UI
                 Dispatcher.Invoke(() =>
                 {
-                    btnConverter_Click(null, null);
+                   // if (_isHidden)
+                        //btnConverter_Click(null, null);
                 });
             }
         }
@@ -69,8 +83,9 @@ namespace intranetConvert_WPF
         {
             _isHidden = true;
             this.Hide();
+
             ConfigurarTimer();
-            NotifyIcon.ShowBalloonTip($"Integrador de pedido", $"Modo automático ativado.\nAtualização a cada {_configuracoes.TempoDeEspera} segundos.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
+            //NotifyIcon.ShowBalloonTip($"Integrador de pedido", $"Modo automático ativado.\nAtualização a cada {_configuracoes.TempoDeEspera} segundos.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
         }
 
         private void OpenFromTray_Click(object sender, RoutedEventArgs e)
@@ -98,10 +113,24 @@ namespace intranetConvert_WPF
             if (WindowState == WindowState.Minimized)
             {
                 this.Hide();
-                NotifyIcon.ShowBalloonTip("Integrador de pedido", $"Modo automático ativado.\nAtualização a cada {_configuracoes.TempoDeEspera} segundos.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
+                //NotifyIcon.ShowBalloonTip("Integrador de pedido", $"Modo automático ativado.\nAtualização a cada {_configuracoes.TempoDeEspera} segundos.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
                 _isHidden = true;
 
             }
+            else
+            {
+                try
+                {
+                    if (_timer != null)
+                    {
+                        _timer.Stop();
+                        _timer.Dispose();
+                    }
+                }
+                catch { }
+
+            }
+
             base.OnStateChanged(e);
         }
 
@@ -128,90 +157,102 @@ namespace intranetConvert_WPF
         private async void btnConverter_Click(object sender, RoutedEventArgs e)
         {
             try
-            {
-                if (TxtInputFile.Text.Equals("") || TxtOutputFile.Text.Equals(""))
-                {
-                    if (!_isHidden)
-                        System.Windows.MessageBox.Show("Pasta de origem e de destino são obrigatórios.");
-
-                    return;
-                }
-
-                string[] arquivosRemessa = Directory.GetFiles(_configuracoes.PastaRemessa, "*.txt");
-                if (arquivosRemessa.Length == 0)
-                {
-                    if (!_isHidden)
-                        System.Windows.MessageBox.Show("Nenhum arquivo de remessa encontrado na pasta especificada.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
-
-                    return;
-                }
-
-                string nomeArquivoCsv = $"pedidos_FC_{DateTime.Now:yyyyMMdd_HHmmss}";
-                string outputFile = Path.Combine(_configuracoes.PastaCSV, $"{nomeArquivoCsv}.csv");
-
-                string pastaProcessados = Path.Combine(_configuracoes.PastaRemessa, "jaProcessados");
-                if (!Directory.Exists(pastaProcessados))
-                    Directory.CreateDirectory(pastaProcessados);
-
-                var pastaDeArquivoDeRemessaProcessados = Path.Combine(_configuracoes.PastaRemessa + "\\jaProcessados\\", nomeArquivoCsv);
-                if (!Directory.Exists(pastaDeArquivoDeRemessaProcessados))
-                    Directory.CreateDirectory(pastaDeArquivoDeRemessaProcessados);
-
-
+            { 
                 if (todosPedidos == null)
                     todosPedidos = new List<object>();
 
                 if (todosPedidos.Count() == 0)
                 {
-                    int numeroPedido = Convert.ToInt32(InputBox.Show("Informe o número do primeiro pedido a ser gerado.", _configuracoes.UltimoPedido));
-                    foreach (string arquivo in arquivosRemessa)
+                    string[] arquivosRemessa = Directory.GetFiles(_configuracoes.PastaRemessa, "*.txt");
+                    if (arquivosRemessa.Length == 0)
                     {
-                        numeroPedido++;
-                        switch (_configuracoes.TipoIntegracao)
+                        if (!_isHidden)
+                            System.Windows.MessageBox.Show("Nenhum arquivo de remessa encontrado na pasta especificada.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                        return;
+                    }
+
+                    numeroPedido = InputBox.Show("Informe o número do primeiro pedido a ser gerado.", _configuracoes.UltimoPedido);
+                    if (numeroPedido != null)
+                    {
+                        foreach (string arquivo in arquivosRemessa)
                         {
-                            case ("API"):
-                                {
-                                    var parser = new RemessaParssePedido(arquivo);
-                                    todosPedidos.AddRange(parser.parssePedidoJson());
-                                }
-                                break;
-                            case ("CSV"):
-                                {
-                                    var parser = new RemessaParser(arquivo);
-                                    todosPedidos.AddRange(await parser.ParseRemessa(numeroPedido));
-                                }
-                                break;
+                            switch (_configuracoes.TipoIntegracao)
+                            {
+                                case ("API"):
+                                    {
+                                        var parser = new RemessaParssePedido(arquivo);
+                                        todosPedidos.AddRange(parser.parssePedidoJson());
+                                    }
+                                    break;
+                                case ("CSV"):
+                                    {
+                                        var parser = new RemessaParser(arquivo);
+                                        numeroPedido = todosPedidos.Count() > 0 ? ((PedidoCSV)todosPedidos.Last()).NumeroPedido : (Convert.ToInt32(numeroPedido)).ToString();
+                                        todosPedidos.AddRange(ProcessarPedidos(await parser.ParseRemessa(Convert.ToInt32(numeroPedido))));
+                                    }
+                                    break;
+                            }
+
+                            if (!arquivosRemessaCarregados.Contains(arquivo))
+                                arquivosRemessaCarregados.Add(arquivo);
                         }
 
-                        if (!arquivosRemessaCarregados.Contains(arquivo))
-                            arquivosRemessaCarregados.Add(arquivo);
                     }
                 }
 
-                foreach (var arquivo in arquivosRemessaCarregados)
-                {
-                    // Mover o arquivo processado
-                    string nomeArquivo = Path.GetFileName(arquivo);
-                    string destino = Path.Combine(pastaDeArquivoDeRemessaProcessados, nomeArquivo);
-                    File.Move(arquivo, destino);
-                }
+                if (todosPedidos.Count > 0)
+                    if (System.Windows.MessageBox.Show($"Gerar os pedidos de {((PedidoCSV)todosPedidos.First()).NumeroPedido} a {((PedidoCSV)todosPedidos.Last()).NumeroPedido}.", "Exportando...", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+                    {
+                        if (TxtInputFile.Text.Equals("") || TxtOutputFile.Text.Equals(""))
+                        {
+                            if (!_isHidden)
+                                System.Windows.MessageBox.Show("Pasta de origem e de destino são obrigatórios.");
 
-                switch (_configuracoes.TipoIntegracao)
-                {
-                    case ("API"):
-                        ExportToApi();
-                        break;
-                    case ("CSV"):
-                        ExportToCsv(outputFile);
-                        _configuracoes.UltimoPedido = todosPedidos.Count() > 0 ? ((PedidoCSV)todosPedidos.Last()).NumeroPedido : (Convert.ToInt32(_configuracoes.UltimoPedido)).ToString();
-                        ConfiguracaoManager.SalvarConfiguracoes(_configuracoes);
-                        break;
-                }
+                            return;
+                        }
 
-                if (!_isHidden)
-                    System.Windows.MessageBox.Show($"Conversão concluída. Arquivo CSV gerado: {outputFile}", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
+                        string nomeArquivoCsv = $"pedidos_FC_{DateTime.Now:yyyyMMdd_HHmmss}";
+                        string outputFile = Path.Combine(_configuracoes.PastaCSV, $"{nomeArquivoCsv}.csv");
 
-                dtgPedidosList.Visibility = Visibility.Collapsed;
+                        string pastaProcessados = Path.Combine(_configuracoes.PastaRemessa, "jaProcessados");
+                        if (!Directory.Exists(pastaProcessados))
+                            Directory.CreateDirectory(pastaProcessados);
+
+                        var pastaDeArquivoDeRemessaProcessados = Path.Combine(_configuracoes.PastaRemessa + "\\jaProcessados\\", nomeArquivoCsv);
+                        if (!Directory.Exists(pastaDeArquivoDeRemessaProcessados))
+                            Directory.CreateDirectory(pastaDeArquivoDeRemessaProcessados);
+
+                        switch (_configuracoes.TipoIntegracao)
+                        {
+                            case ("API"):
+                                ExportToApi();
+                                break;
+                            case ("CSV"):
+                                ExportToCsv(outputFile);
+                                _configuracoes.UltimoPedido = (todosPedidos.Count() > 0 ? Convert.ToInt32(((PedidoCSV)todosPedidos.Last()).NumeroPedido) + 1 : Convert.ToInt32(_configuracoes.UltimoPedido) + 1).ToString();
+                                ConfiguracaoManager.SalvarConfiguracoes(_configuracoes);
+                                todosPedidos.Clear();
+                                break;
+                        }
+
+                        if (!_isHidden)
+                            System.Windows.MessageBox.Show($"Conversão concluída. Arquivo CSV gerado: {outputFile}", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        lbQntPedidos.Visibility = Visibility.Collapsed;
+                        dtgPedidosList.Visibility = Visibility.Collapsed;
+                        btnConverter.Visibility = Visibility.Collapsed;
+
+                        foreach (var arquivo in arquivosRemessaCarregados)
+                        {
+                            // Mover o arquivo processado
+                            string nomeArquivo = Path.GetFileName(arquivo);
+                            string destino = Path.Combine(pastaDeArquivoDeRemessaProcessados, nomeArquivo);
+                            File.Move(arquivo, destino);
+                        }
+
+                        arquivosRemessaCarregados.Clear();
+                    }
             }
             catch (Exception ex)
             {
@@ -340,8 +381,9 @@ namespace intranetConvert_WPF
                         line.Append($"\"{produto.SKU}\",");
                         line.Append(","); // Unidade
                         line.Append($"{produto.Quantidade},");
-                        line.Append($"{produto.ValorUnitario},");
-                        line.Append($"{produto.ValorTotal},");
+                        line.Append($"\"{produto.ValorUnitario.ToString()}\",");
+                        line.Append($"\"{produto.ValorTotal.ToString()}\",");
+                        line.Append($"\"{pedido.Total.ToString()}\",");
                         line.Append(","); // Valor Frete Pedido
                         line.Append(","); // Valor Desconto Pedido
                         line.Append(","); // Outras despesas
@@ -496,29 +538,39 @@ namespace intranetConvert_WPF
             string[] arquivosRemessa = Directory.GetFiles(_configuracoes.PastaRemessa, "*.txt");
 
             numeroPedido = InputBox.Show("Informe o número do primeiro pedido a ser gerado.", _configuracoes.UltimoPedido);
-
-            foreach (string arquivo in arquivosRemessa)
+            if (numeroPedido != null)
             {
-                switch (_configuracoes.TipoIntegracao)
+                (new Instancia()).Carregamento("Carregando");
+
+                foreach (string arquivo in arquivosRemessa)
                 {
-                    case ("API"):
-                        {
-                            var parser = new RemessaParssePedido(arquivo);
-                            todosPedidos.AddRange(parser.parssePedidoJson());
-                        }
-                        break;
-                    case ("CSV"):
-                        {
-                            numeroPedido = todosPedidos.Count() > 0 ? ((PedidoCSV)todosPedidos.Last()).NumeroPedido : (Convert.ToInt32(numeroPedido) + 1).ToString();
-                            var parser = new RemessaParser(arquivo);
-                            todosPedidos.AddRange(ProcessarPedidos(await parser.ParseRemessa(Convert.ToInt32(numeroPedido))));
-                        }
-                        break;
+                    switch (_configuracoes.TipoIntegracao)
+                    {
+                        case ("API"):
+                            {
+                                var parser = new RemessaParssePedido(arquivo);
+                                todosPedidos.AddRange(parser.parssePedidoJson());
+                            }
+                            break;
+                        case ("CSV"):
+                            {
+                                numeroPedido = todosPedidos.Count() > 0 ? ((PedidoCSV)todosPedidos.Last()).NumeroPedido : (Convert.ToInt32(numeroPedido)).ToString();
+                                var parser = new RemessaParser(arquivo);
+                                todosPedidos.AddRange(ProcessarPedidos(await parser.ParseRemessa(Convert.ToInt32(numeroPedido))));
+                            }
+                            break;
+                    }
+
+                    if (!arquivosRemessaCarregados.Contains(arquivo))
+                        arquivosRemessaCarregados.Add(arquivo);
                 }
 
-                if (!arquivosRemessaCarregados.Contains(arquivo))
-                    arquivosRemessaCarregados.Add(arquivo);
+                Instancia.splashScreen.LoadComplete();
+
             }
+
+            lbQntPedidos.Content = $"Quantidade de pedidos: {todosPedidos.Count()}";
+            lbQntPedidos.Visibility = Visibility.Visible; 
 
             return todosPedidos;
         }
@@ -548,7 +600,7 @@ namespace intranetConvert_WPF
                     CepComprador = pedidoDict.GetValueOrDefault("CEP Comprador"),
                     CidadeComprador = pedidoDict.GetValueOrDefault("Cidade Comprador"),
                     UfComprador = pedidoDict.GetValueOrDefault("UF Comprador"),
-                    Produtos = ProcessarProdutos(pedidoDict.GetValueOrDefault("Produtos"))
+                    Produtos = ProcessarProdutos(pedidoDict.GetValueOrDefault("Produtos")),
                 };
 
                 pedidosProcessados.Add(pedido);
@@ -568,6 +620,9 @@ namespace intranetConvert_WPF
 
             foreach (string produtoString in produtosArray)
             {
+                if (produtoString.Equals(""))
+                    continue;
+
                 string[] campos = produtoString.Split('|');
                 ProdutoCSV produto = new ProdutoCSV();
 
@@ -585,10 +640,10 @@ namespace intranetConvert_WPF
                                 produto.Quantidade = int.Parse(partes[1]);
                                 break;
                             case "Valor Unitário":
-                                produto.ValorUnitario = decimal.Parse(partes[1], CultureInfo.InvariantCulture);
+                                produto.ValorUnitario = decimal.Parse(partes[1].Replace(",", "."), CultureInfo.InvariantCulture);
                                 break;
                             case "Valor Total":
-                                produto.ValorTotal = decimal.Parse(partes[1], CultureInfo.InvariantCulture);
+                                produto.ValorTotal = decimal.Parse(partes[1].Replace(",", "."), CultureInfo.InvariantCulture);
                                 break;
                         }
                     }
@@ -631,6 +686,7 @@ namespace intranetConvert_WPF
                 dtgPedidosList.Columns.Add(buttonColumn);
             }
         }
+
         private void ToggleRowDetails_Click(object sender, RoutedEventArgs e)
         {
             var button = (System.Windows.Controls.Button)sender;

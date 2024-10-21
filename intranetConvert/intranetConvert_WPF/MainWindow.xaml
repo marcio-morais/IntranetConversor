@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:tb="http://www.hardcodet.net/taskbar"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
-        Title="Intranet Converter" Height="300" Width="500" WindowState="Maximized" >
-    <DockPanel>
+        Title="{Binding SystemVersion}" Height="300" Width="500" WindowState="Maximized" ResizeMode="CanResize" >
+    <Grid>
+
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_Arquivo">
                 <MenuItem Header="_Configurações" Click="MenuItemConfiguracoes_Click" HorizontalContentAlignment="Center">
@@ -15,23 +16,24 @@
             </MenuItem>
             <MenuItem Header="_Contatos" Click="MenuContatos_Click" HorizontalContentAlignment="Center"/>
         </Menu>
-        <Grid Margin="10">
+
+        <Grid Margin="5,20,5,5" >
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Text="Selecione local do arquivo de remessa:" Margin="0,0,0,5" />
-            <DockPanel Grid.Row="1" Margin="0,5">
+            <TextBlock Grid.Row="0" Text="Selecione local do arquivo de remessa:"  />
+            
+            <DockPanel Grid.Row="1" >
                 <Button Content="Procurar" DockPanel.Dock="Right" Width="80" Click="BtnBrowseInput_Click" Margin="5,0,0,0" />
                 <TextBox x:Name="TxtInputFile" IsReadOnly="True" />
             </DockPanel>
 
-            <Grid Grid.Row="2" x:Name="grdIntegracaoIntegracaoPorCSV" >
+            <Grid Grid.Row="2" x:Name="grdIntegracaoIntegracaoPorCSV" Margin="0,5" >
                 <Grid.RowDefinitions>
                     <RowDefinition/>
                     <RowDefinition/>
@@ -46,24 +48,7 @@
                 <Button Grid.Row="1" Grid.Column="1" Content="Salvar em" DockPanel.Dock="Right" Width="80" Click="BtnBrowseOutput_Click" Margin="5,0,0,0" />
             </Grid>
 
-            <DockPanel Grid.Row="5" Margin="0,5">
-                <WrapPanel DockPanel.Dock="Bottom" HorizontalAlignment="Right">
-                    <Button x:Name="btnCarregar" Content="Carregar" Width="80" Height="30" Click="btnCarregar_Click" Margin="5,5,0,0" />
-                    <Button x:Name="btnConverter" Content="Converter"  Width="80" Height="30" Click="btnConverter_Click" Margin="5,5,0,0" Visibility="Collapsed" />
-                    <Button x:Name="btnOcultar" Content="Ocultar" Width="80" Height="30" Click="MinimizeToBandeja_Click" Margin="5,5,0,0" />
-                    <!-- NotifyIcon para a bandeja do sistema -->
-                    <tb:TaskbarIcon x:Name="NotifyIcon"
-                                    IconSource="Resources/IconConvert_borda_White.ico"
-                                    ToolTipText="Integrador First Class">
-                        <tb:TaskbarIcon.ContextMenu>
-                            <ContextMenu>
-                                <MenuItem Header="Abrir" Click="OpenFromTray_Click"/>
-                                <MenuItem Header="Configuracao" Click="MenuItemConfiguracoes_Click" />
-                                <MenuItem Header="Sair" Click="Exit_Click" />
-                            </ContextMenu>
-                        </tb:TaskbarIcon.ContextMenu>
-                    </tb:TaskbarIcon>
-                </WrapPanel>
+            <DockPanel Grid.Row="3">
 
                 <DataGrid x:Name="dtgPedidosList" AutoGenerateColumns="True" AutoGeneratingColumn="dtgPedidosList_AutoGeneratingColumn" Margin="10" IsReadOnly="True" Language="pt-BR" RowDetailsVisibilityMode="Collapsed" Visibility="Collapsed" >
                     <DataGrid.RowDetailsTemplate>
@@ -75,6 +60,33 @@
 
                 <wv2:WebView2 Name="webBrowser"  NavigationStarting="WebBrowser_Navigated"/>
             </DockPanel>
+
+            <Label Grid.Row="4" x:Name="lbQntPedidos" HorizontalAlignment="Left" Visibility="Collapsed" >
+                    <TextBlock>
+                        <TextBlock.Text>
+                            <Binding ElementName="dtgPedidosList" Path="Items.Count" StringFormat="Quantidade de pedidos: {0}" />
+                        </TextBlock.Text>
+                    </TextBlock>
+             </Label>
+            
+            <WrapPanel Grid.Row="4" DockPanel.Dock="Bottom" HorizontalAlignment="Right">
+                <Button x:Name="btnCarregar" Content="Carregar" Width="80" Height="30" Click="btnCarregar_Click" Margin="5,0,0,0" />
+                <Button x:Name="btnConverter" Content="Converter"  Width="80" Height="30" Click="btnConverter_Click" Margin="5,0,0,0" Visibility="Collapsed" />
+                <Button x:Name="btnOcultar" Content="Ocultar" Width="80" Height="30" Click="MinimizeToBandeja_Click" Margin="5,0,0,0" Visibility="Collapsed"  />
+                <!-- NotifyIcon para a bandeja do sistema -->
+                <tb:TaskbarIcon x:Name="NotifyIcon"
+                                    IconSource="Resources/IconConvert_borda_White.ico"
+                                    ToolTipText="Integrador First Class">
+                    <tb:TaskbarIcon.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Abrir" Click="OpenFromTray_Click"/>
+                            <MenuItem Header="Configuracao" Click="MenuItemConfiguracoes_Click" />
+                            <MenuItem Header="Sair" Click="Exit_Click" />
+                        </ContextMenu>
+                    </tb:TaskbarIcon.ContextMenu>
+                </tb:TaskbarIcon>
+            </WrapPanel>
+            
         </Grid>
-    </DockPanel>
+    </Grid>
 </Window>
